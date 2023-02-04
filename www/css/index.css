@@ -1,0 +1,42 @@
+// app global css in SCSS form
+body {
+  background-color: #1b1b1b;
+  color: gray;
+}
+.container {
+  margin: 0 auto;
+  margin-top: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 300px;
+  max-width: 1000px;
+ }
+fieldset {
+  margin: 1em 0;
+  border: 1px solid;
+}
+fieldset input {
+  margin-bottom: 0.2em;
+}
+.element {
+  margin: 1em 0;
+}
+.full-width {
+  width: 95%;
+}
+.switch-wrapper {
+  display: flex;
+  justify-content: space-between;
+}
+.switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30%;
+}
+input {
+}
+label {
+  margin: 0 auto;
+}

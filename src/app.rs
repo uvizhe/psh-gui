@@ -4,6 +4,11 @@ use yew::prelude::*;
 
 use psh::{CharSet, Psh, PshWebDb, ZeroizingString};
 
+mod components;
+
+use components::alias_input::AliasInput;
+use components::secret_input::SecretInput;
+
 const MP: &str = "password";
 
 #[wasm_bindgen]
@@ -28,11 +33,8 @@ fn collect_aliases(psh: &Psh) -> Vec<String> {
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let alias_input_ref = use_node_ref();
-    let secret_input_ref = use_node_ref();
-
     let psh = use_mut_ref(|| OnceCell::<Psh>::new());
-    let aliases = use_state(|| Vec::<String>::new());
+    let known_aliases = use_state(|| Vec::<String>::new());
     let alias = use_state(|| String::new());
     let alias_handle = use_state(|| AliasHandle::Store);
     let use_secret = use_state(|| true);
@@ -40,106 +42,43 @@ pub fn app() -> Html {
     let charset = use_state(|| CharSet::Standard);
     let known_alias = use_state(|| false);
     //let password = use_state(|| ZeroizingString::new("".to_string()));
-
     let password_msg = use_state(|| String::new());
+
     {
-        let psh_ = psh.clone();
-        let aliases_ = aliases.clone();
+        let psh = psh.clone();
+        let known_aliases = known_aliases.clone();
         use_effect_with_deps(
             move |_| {
-                let res = psh_.borrow_mut().set(
+                let res = psh.borrow_mut().set(
                     Psh::new(
                         ZeroizingString::new(MP.to_string()),
                         PshWebDb::new()
                     ).unwrap()
                 );
                 if res.is_ok() {
-                    aliases_.set(collect_aliases(psh_.borrow().get().unwrap()));
+                    known_aliases.set(collect_aliases(psh.borrow().get().unwrap()));
                 } else {
                     log("Failed to initialize Psh");
                 }
             },
             (),
         );
-        let password_msg = password_msg.clone();
-        let psh = psh.clone();
-        let alias = alias.clone();
-        let alias2 = alias.clone();
-        let aliases = aliases.clone();
-        let known_alias = known_alias.clone();
-        let alias_handle = alias_handle.clone();
-        let secret = secret.clone();
-        let charset = charset.clone();
-        let alias_input_ref = alias_input_ref.clone();
-        let secret_input_ref = secret_input_ref.clone();
-        use_effect_with_deps(
-            move |_| {
-                let alias_string = alias.trim().to_string();
-                if !alias_string.is_empty() {
-                    let mut psh = psh.borrow_mut();
-                    let psh = psh.get_mut().unwrap();
-                    let secret =
-                        if secret.to_string().is_empty() {
-                            None
-                        } else {
-                            Some(ZeroizingString::new(secret.to_string()))
-                        };
-                    let use_secret = secret.is_some();
-                    if *alias_handle != AliasHandle::Remove {
-                        let pass = psh.derive_password(
-                            &ZeroizingString::new(alias_string.clone()),
-                            secret,
-                            Some(*charset),
-                        );
-                        password_msg.set(pass.to_string());
-                        if !aliases.contains(&alias_string) && *alias_handle == AliasHandle::Store {
-                            let res = psh.append_alias_to_db(
-                                &ZeroizingString::new(alias_string.clone()),
-                                Some(use_secret),
-                                Some(*charset),
-                            );
-                            if res.is_ok() {
-                                aliases.set(collect_aliases(psh));
-                            } else {
-                                log("Failed to save alias");
-                            }
-                        }
-                    } else {
-                        let res = psh.remove_alias_from_db(&ZeroizingString::new(alias_string.clone()));
-                        if res.is_ok() {
-                            alias.set(String::new());
-                            password_msg.set(String::new());
-                            aliases.set(collect_aliases(psh));
-                        } else {
-                            log("Failed to remove alias");
-                        }
-                    }
-                    let alias_input = alias_input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
-                    alias_input.set_value("");
-                    let secret_input = secret_input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
-                    secret_input.set_value("");
-                    known_alias.set(false);
-                    alias_handle.set(AliasHandle::Store);
-                }
-            },
-            alias2,
-        );
     }
 
-    let check_alias = {
+    let on_alias_input: Callback<(String, bool)> = {
         let psh = psh.clone();
-        let aliases = aliases.clone();
+        let alias = alias.clone();
         let known_alias = known_alias.clone();
         let use_secret = use_secret.clone();
         let charset = charset.clone();
         let alias_handle = alias_handle.clone();
-        let alias_input_ref = alias_input_ref.clone();
-        Callback::from(move |_| {
-            let alias = alias_input_ref.cast::<web_sys::HtmlInputElement>().unwrap().value();
-            let is_saved_alias = aliases.contains(&alias);
-            known_alias.set(is_saved_alias);
-            if is_saved_alias {
-                let alias = ZeroizingString::new(alias);
+        let password_msg = password_msg.clone();
+        Callback::from(move |(input, known): (String, bool)| {
+            password_msg.set("".to_string());
+            alias.set(input.clone());
+            known_alias.set(known);
+            if known {
+                let alias = ZeroizingString::new(input);
                 use_secret.set(psh.borrow().get().unwrap().alias_uses_secret(&alias));
                 charset.set(psh.borrow().get().unwrap().get_charset(&alias));
             }
@@ -149,6 +88,12 @@ pub fn app() -> Html {
                     alias_handle.set(AliasHandle::Store);
                 }
             }
+        })
+    };
+    let on_secret_input: Callback<String> = {
+        let secret = secret.clone();
+        Callback::from(move |input: String| {
+            secret.set(input.clone());
         })
     };
     let set_alias_handle = {
@@ -176,41 +121,78 @@ pub fn app() -> Html {
         })
     };
     let process = {
+        let password_msg = password_msg.clone();
+        let psh = psh.clone();
         let alias = alias.clone();
-        let alias_input_ref = alias_input_ref.clone();
-        let secret_input_ref = secret_input_ref.clone();
+        let known_aliases = known_aliases.clone();
+        let known_alias = known_alias.clone();
+        let alias_handle = alias_handle.clone();
+        let secret = secret.clone();
+        let charset = charset.clone();
         Callback::from(move |_| {
-            alias.set(alias_input_ref.cast::<web_sys::HtmlInputElement>().unwrap().value());
-            secret.set(secret_input_ref.cast::<web_sys::HtmlInputElement>().unwrap().value());
+            let alias_string = alias.trim().to_string();
+            if !alias_string.is_empty() {
+                let mut psh = psh.borrow_mut();
+                let psh = psh.get_mut().unwrap();
+                let secret_string =
+                    if secret.to_string().is_empty() {
+                        None
+                    } else {
+                        Some(ZeroizingString::new(secret.to_string()))
+                    };
+                let use_secret = secret_string.is_some();
+                if *alias_handle != AliasHandle::Remove {
+                    let pass = psh.derive_password(
+                        &ZeroizingString::new(alias_string.clone()),
+                        secret_string,
+                        Some(*charset),
+                    );
+                    password_msg.set(pass.to_string());
+                    if !known_aliases.contains(&alias_string) && *alias_handle == AliasHandle::Store {
+                        let res = psh.append_alias_to_db(
+                            &ZeroizingString::new(alias_string.clone()),
+                            Some(use_secret),
+                            Some(*charset),
+                        );
+                        if res.is_ok() {
+                            known_aliases.set(collect_aliases(psh));
+                        } else {
+                            log("Failed to save alias");
+                        }
+                    }
+                } else {
+                    let res = psh.remove_alias_from_db(&ZeroizingString::new(alias_string.clone()));
+                    if res.is_ok() {
+                        alias.set(String::new());
+                        password_msg.set(String::new());
+                        known_aliases.set(collect_aliases(psh));
+                    } else {
+                        log("Failed to remove alias");
+                    }
+                }
+                alias.set("".to_string());
+                secret.set("".to_string());
+                known_alias.set(false);
+                alias_handle.set(AliasHandle::Store);
+            }
         })
     };
 
+    let known_aliases = (*known_aliases).clone();
+    let password_msg = (*password_msg).clone();
+
     html! {
         <main class="container">
-            <div class="element">
-                <input type="text"
-                    id="alias-input"
-                    oninput={check_alias}
-                    list="aliases"
-                    ref={alias_input_ref}
-                    placeholder="Enter alias..."
-                />
-                <datalist id="aliases">
-                    {
-                        aliases.iter().map(|alias| {
-                            html!{<option key={alias.clone()} value={alias.clone()}/>}
-                        }).collect::<Html>()
-                    }
-                </datalist>
-            </div>
-            <div class="element">
-                <input type="password"
-                    id="secret-input"
-                    ref={secret_input_ref}
-                    placeholder="Enter secret..."
-                    disabled={!*use_secret}
-                />
-            </div>
+            <AliasInput
+                clear={!password_msg.is_empty()}
+                {known_aliases}
+                on_input={on_alias_input.clone()}
+            />
+            <SecretInput
+                clear={!password_msg.is_empty()}
+                disabled={!*use_secret}
+                on_input={on_secret_input.clone()}
+            />
             <div class="element">
                 <button type="button" onclick={process}>
                     { if *alias_handle != AliasHandle::Remove {"Get password"}
@@ -291,7 +273,6 @@ pub fn app() -> Html {
             </fieldset>
             <div class="element">
                 <div class="row">
-                    <p><b>{ &*alias }</b></p>
                     <p><b>{ &*password_msg }</b></p>
                 </div>
             </div>

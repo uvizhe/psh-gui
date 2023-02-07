@@ -34,16 +34,27 @@ fn collect_aliases(psh: &Psh) -> Vec<String> {
 
 #[function_component(App)]
 pub fn app() -> Html {
+    // Psh instance
     let psh = use_mut_ref(|| OnceCell::<Psh>::new());
+    // Aliases that are stored in psh database
     let known_aliases = use_state(|| Vec::<String>::new());
+    // Currently input alias
     let alias = use_state(|| String::new());
+    // Currently selected alias handle
     let alias_handle = use_state(|| AliasHandle::Store);
+    // Last user choice of alias handle
     let alias_handle_user_choice = use_state(|| AliasHandle::Store);
+    // Whether current alias should use secret or not
     let use_secret = use_state(|| true);
+    // Currently input secret
     let secret = use_state(|| String::new());
+    // Currently selected charset
     let charset = use_state(|| CharSet::Standard);
+    // Last user choice of charset
     let charset_user_choice = use_state(|| CharSet::Standard);
+    // Whether current alias is stored in psh database or not
     let known_alias = use_state(|| false);
+    // Derived password
     let password_msg = use_state(|| String::new());
 
     {
@@ -78,24 +89,28 @@ pub fn app() -> Html {
         let charset_user_choice = charset_user_choice.clone();
         let password_msg = password_msg.clone();
         Callback::from(move |(input, known): (String, bool)| {
-            password_msg.set("".to_string());
             alias.set(input.clone());
             known_alias.set(known);
             if known {
-                let alias = ZeroizingString::new(input);
-                use_secret.set(psh.borrow().get().unwrap().alias_uses_secret(&alias));
                 alias_handle.set(AliasHandle::Store);
-                charset.set(psh.borrow().get().unwrap().get_charset(&alias));
+                let alias = ZeroizingString::new(input);
+                let needs_secret = psh.borrow().get().unwrap().alias_uses_secret(&alias);
+                use_secret.set(needs_secret);
+                let alias_charset = psh.borrow().get().unwrap().get_charset(&alias);
+                charset.set(alias_charset);
             }
             else {
-                use_secret.set(true);
+                // Reset "remove" alias handle because it's only applicable to known aliases
                 if *alias_handle_user_choice == AliasHandle::Remove {
                     alias_handle.set(AliasHandle::Store);
                 } else {
                     alias_handle.set(*alias_handle_user_choice);
                 }
+                use_secret.set(true);
                 charset.set(*charset_user_choice);
             }
+            // Clear last derived password on new alias input
+            password_msg.set("".to_string());
         })
     };
     let on_secret_input: Callback<String> = {

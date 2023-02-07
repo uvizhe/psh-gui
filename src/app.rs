@@ -8,6 +8,7 @@ mod components;
 
 use components::alias_input::AliasInput;
 use components::secret_input::SecretInput;
+use components::triswitch::Triswitch;
 
 const MP: &str = "password";
 
@@ -17,7 +18,7 @@ extern "C" {
     fn log(s: &str);
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum AliasHandle {
     Store,
     Ignore,
@@ -37,11 +38,12 @@ pub fn app() -> Html {
     let known_aliases = use_state(|| Vec::<String>::new());
     let alias = use_state(|| String::new());
     let alias_handle = use_state(|| AliasHandle::Store);
+    let alias_handle_user_choice = use_state(|| AliasHandle::Store);
     let use_secret = use_state(|| true);
     let secret = use_state(|| String::new());
     let charset = use_state(|| CharSet::Standard);
+    let charset_user_choice = use_state(|| CharSet::Standard);
     let known_alias = use_state(|| false);
-    //let password = use_state(|| ZeroizingString::new("".to_string()));
     let password_msg = use_state(|| String::new());
 
     {
@@ -70,8 +72,10 @@ pub fn app() -> Html {
         let alias = alias.clone();
         let known_alias = known_alias.clone();
         let use_secret = use_secret.clone();
-        let charset = charset.clone();
         let alias_handle = alias_handle.clone();
+        let alias_handle_user_choice = alias_handle_user_choice.clone();
+        let charset = charset.clone();
+        let charset_user_choice = charset_user_choice.clone();
         let password_msg = password_msg.clone();
         Callback::from(move |(input, known): (String, bool)| {
             password_msg.set("".to_string());
@@ -80,13 +84,17 @@ pub fn app() -> Html {
             if known {
                 let alias = ZeroizingString::new(input);
                 use_secret.set(psh.borrow().get().unwrap().alias_uses_secret(&alias));
+                alias_handle.set(AliasHandle::Store);
                 charset.set(psh.borrow().get().unwrap().get_charset(&alias));
             }
             else {
                 use_secret.set(true);
-                if *alias_handle == AliasHandle::Remove {
+                if *alias_handle_user_choice == AliasHandle::Remove {
                     alias_handle.set(AliasHandle::Store);
+                } else {
+                    alias_handle.set(*alias_handle_user_choice);
                 }
+                charset.set(*charset_user_choice);
             }
         })
     };
@@ -98,24 +106,42 @@ pub fn app() -> Html {
     };
     let set_alias_handle = {
         let alias_handle = alias_handle.clone();
-        Callback::from(move |e: Event| {
-            let value = e.target_dyn_into::<web_sys::HtmlInputElement>().unwrap().value();
+        let alias_handle_user_choice = alias_handle_user_choice.clone();
+        Callback::from(move |value: String| {
             match value.as_str() {
-                "Store" => alias_handle.set(AliasHandle::Store),
-                "Ignore" => alias_handle.set(AliasHandle::Ignore),
-                "Remove" => alias_handle.set(AliasHandle::Remove),
+                "0" => {
+                    alias_handle.set(AliasHandle::Store);
+                    alias_handle_user_choice.set(AliasHandle::Store);
+                }
+                "1" => {
+                    alias_handle.set(AliasHandle::Ignore);
+                    alias_handle_user_choice.set(AliasHandle::Ignore);
+                }
+                "2" => {
+                    alias_handle.set(AliasHandle::Remove);
+                    alias_handle_user_choice.set(AliasHandle::Remove);
+                }
                 _ => unreachable!()
             }
         })
     };
     let set_charset = {
         let charset = charset.clone();
-        Callback::from(move |e: Event| {
-            let value = e.target_dyn_into::<web_sys::HtmlInputElement>().unwrap().value();
+        let charset_user_choice = charset_user_choice.clone();
+        Callback::from(move |value: String| {
             match value.as_str() {
-                "Standard" => charset.set(CharSet::Standard),
-                "All" => charset.set(CharSet::RequireAll),
-                "Reduced" => charset.set(CharSet::Reduced),
+                "0" => {
+                    charset.set(CharSet::Standard);
+                    charset_user_choice.set(CharSet::Standard);
+                }
+                "1" => {
+                    charset.set(CharSet::RequireAll);
+                    charset_user_choice.set(CharSet::RequireAll);
+                }
+                "2" => {
+                    charset.set(CharSet::Reduced);
+                    charset_user_choice.set(CharSet::Reduced);
+                }
                 _ => unreachable!()
             }
         })
@@ -127,8 +153,10 @@ pub fn app() -> Html {
         let known_aliases = known_aliases.clone();
         let known_alias = known_alias.clone();
         let alias_handle = alias_handle.clone();
+        let alias_handle_user_choice = alias_handle_user_choice.clone();
         let secret = secret.clone();
         let charset = charset.clone();
+        let charset_user_choice = charset_user_choice.clone();
         Callback::from(move |_| {
             let alias_string = alias.trim().to_string();
             if !alias_string.is_empty() {
@@ -174,8 +202,25 @@ pub fn app() -> Html {
                 secret.set("".to_string());
                 known_alias.set(false);
                 alias_handle.set(AliasHandle::Store);
+                alias_handle_user_choice.set(AliasHandle::Store);
+                charset.set(CharSet::Standard);
+                charset_user_choice.set(CharSet::Standard);
             }
         })
+    };
+    let match_alias_handle = {
+        match *alias_handle {
+            AliasHandle::Store => 0,
+            AliasHandle::Ignore => 1,
+            AliasHandle::Remove => 2,
+        }
+    };
+    let match_charset = {
+        match *charset {
+            CharSet::Standard => 0,
+            CharSet::RequireAll => 1,
+            CharSet::Reduced => 2,
+        }
     };
 
     let known_aliases = (*known_aliases).clone();
@@ -199,78 +244,28 @@ pub fn app() -> Html {
                         else {"Remove alias"} }
                 </button>
             </div>
-            <fieldset class="full-width">
-                <legend>{"How to handle alias"}</legend>
-                <div class="switch-wrapper">
-                    <div class="switch">
-                        <input type="radio"
-                            id="store"
-                            name="alias-handle"
-                            value="Store"
-                            onchange={set_alias_handle.clone()}
-                            checked={*alias_handle == AliasHandle::Store}
-                        />
-                        <label for="store">{"Store"}</label>
-                    </div>
-                    <div class="switch">
-                        <input type="radio"
-                            id="ignore"
-                            name="alias-handle"
-                            value="Ignore"
-                            onchange={set_alias_handle.clone()}
-                            checked={*alias_handle == AliasHandle::Ignore}
-                            disabled={*known_alias}
-                        />
-                        <label for="ignore">{"Don't store"}</label>
-                    </div>
-                    <div class="switch">
-                        <input type="radio"
-                            id="remove"
-                            name="alias-handle"
-                            value="Remove"
-                            onchange={set_alias_handle}
-                            checked={*alias_handle == AliasHandle::Remove}
-                            disabled={!*known_alias}
-                        />
-                        <label for="remove">{"Remove"}</label>
-                    </div>
-                </div>
-            </fieldset>
-            <fieldset class="full-width" disabled={*known_alias}>
-                <legend>{"Character set to use"}</legend>
-                <div class="switch-wrapper">
-                    <div class="switch">
-                        <input type="radio"
-                            id="standard"
-                            name="charset"
-                            value="Standard"
-                            onchange={set_charset.clone()}
-                            checked={*charset == CharSet::Standard}
-                        />
-                        <label for="standard">{"Standard"}</label>
-                    </div>
-                    <div class="switch">
-                        <input type="radio"
-                            id="all"
-                            name="charset"
-                            value="All"
-                            onchange={set_charset.clone()}
-                            checked={*charset == CharSet::RequireAll}
-                        />
-                        <label for="all">{"All"}</label>
-                    </div>
-                    <div class="switch">
-                        <input type="radio"
-                            id="reduced"
-                            name="charset"
-                            value="Reduced"
-                            onchange={set_charset}
-                            checked={*charset == CharSet::Reduced}
-                        />
-                        <label for="reduced">{"Reduced"}</label>
-                    </div>
-                </div>
-            </fieldset>
+            <Triswitch
+                checked={match_alias_handle}
+                disabled={vec![false, *known_alias, !*known_alias]}
+                name="alias_handle"
+                title="How to handle alias"
+                labels={vec![
+                    "Store".to_string(),
+                    "Don't store".to_string(),
+                    "Remove".to_string()]}
+                on_switch={set_alias_handle.clone()}
+            />
+            <Triswitch
+                checked={match_charset}
+                disabled={vec![*known_alias, *known_alias, *known_alias]}
+                name="charset"
+                title="Character set to use"
+                labels={vec![
+                    "Standard".to_string(),
+                    "Require All".to_string(),
+                    "Reduced".to_string()]}
+                on_switch={set_charset.clone()}
+            />
             <div class="element">
                 <div class="row">
                     <p><b>{ &*password_msg }</b></p>

@@ -57,6 +57,14 @@ pub fn app() -> Html {
     // Derived password
     let password_msg = use_state(|| String::new());
 
+    let can_derive_password =  !(*alias).trim().is_empty()
+        && ((*use_secret && !(*secret).is_empty())
+            || !*use_secret
+            || !*known_alias);
+    let can_process =
+        if *alias_handle == AliasHandle::Remove { *known_alias }
+        else { can_derive_password };
+
     {
         let psh = psh.clone();
         let known_aliases = known_aliases.clone();
@@ -257,7 +265,7 @@ pub fn app() -> Html {
                 on_input={on_secret_input.clone()}
             />
             <div class="element">
-                <button type="button" onclick={process}>
+                <button type="button" onclick={process} disabled={!can_process}>
                     { if *alias_handle != AliasHandle::Remove {"Get password"}
                         else {"Remove alias"} }
                 </button>

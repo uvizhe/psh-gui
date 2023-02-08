@@ -243,6 +243,9 @@ pub fn app() -> Html {
 
     html! {
         <main class="container">
+            <div class="element password">
+                <strong>{ &*password_msg }</strong>
+            </div>
             <AliasInput
                 clear={!password_msg.is_empty()}
                 {known_aliases}
@@ -281,11 +284,6 @@ pub fn app() -> Html {
                     "Reduced".to_string()]}
                 on_switch={set_charset.clone()}
             />
-            <div class="element">
-                <div class="row">
-                    <p><b>{ &*password_msg }</b></p>
-                </div>
-            </div>
         </main>
     }
 }

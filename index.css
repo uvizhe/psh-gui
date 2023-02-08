@@ -27,6 +27,30 @@ fieldset input {
 .full-width {
   width: 95%;
 }
+.password {
+  height: 2em;
+}
+.password::before {
+  content: "";
+  padding-left: 0.5em;
+  border-left: 1px solid;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+}
+.password::after {
+  content: "";
+  padding-right: 0.5em;
+  border-right: 1px solid;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+}
+.password strong {
+  display: inline-block;
+  text-align: center;
+  width: 13.5em;
+  font-family: monospace;
+  font-size: 16px;
+}
 .switch-wrapper {
   display: flex;
   justify-content: space-between;
@@ -36,6 +60,12 @@ fieldset input {
   flex-direction: column;
   align-items: center;
   width: 30%;
+}
+input[type="text"] {
+  width: 14em;
+}
+input[type="password"] {
+  width: 14em;
 }
 input[type="radio"] {
   appearance: none;

@@ -313,18 +313,20 @@ pub fn app() -> Html {
             <div class="element password">
                 <strong>{ &*password_msg }</strong>
             </div>
-            <AliasInput
-                clear={!password_msg.is_empty()}
-                {known_aliases}
-                on_input={on_alias_input.clone()}
-            />
-            <SecretInput
-                clear={!password_msg.is_empty() || !*use_secret}
-                disabled={!*use_secret}
-                id="secret-input"
-                hint="Enter secret..."
-                on_input={on_secret_input.clone()}
-            />
+            <form> // This ensures that inputs focus with Tab in right order (before triswitches)
+                <AliasInput
+                    clear={!password_msg.is_empty()}
+                    {known_aliases}
+                    on_input={on_alias_input.clone()}
+                />
+                <SecretInput
+                    clear={!password_msg.is_empty() || !*use_secret}
+                    disabled={!*use_secret}
+                    id="secret-input"
+                    hint="Enter secret..."
+                    on_input={on_secret_input.clone()}
+                />
+            </form>
             <div class="element">
                 <button type="button" onclick={process} disabled={!can_process}>
                     { if *alias_handle != AliasHandle::Remove {"Get password"}

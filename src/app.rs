@@ -369,7 +369,7 @@ pub fn app() -> Html {
                     on_input={on_password2_input.clone()}
                 />
                 <div class="element">
-                    {"Warning: if you forget your Master Password you won't be able to get your passwords"}
+                    {"Warning: if you forget your Master Password you won't be able to retrieve your passwords"}
                 </div>
             }
             <div class="element">

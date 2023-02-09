@@ -257,7 +257,7 @@ pub fn app() -> Html {
                 let mut psh = psh.borrow_mut();
                 let psh = psh.get_mut().unwrap();
                 let secret_string =
-                    if secret.to_string().is_empty() {
+                    if secret.to_string().is_empty() || !*use_secret {
                         None
                     } else {
                         Some(ZeroizingString::new(secret.to_string()))
@@ -319,7 +319,7 @@ pub fn app() -> Html {
                 on_input={on_alias_input.clone()}
             />
             <SecretInput
-                clear={!password_msg.is_empty()}
+                clear={!password_msg.is_empty() || !*use_secret}
                 disabled={!*use_secret}
                 id="secret-input"
                 hint="Enter secret..."

@@ -12,6 +12,16 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
     let input_ref = use_node_ref();
 
     {
+        let input_ref = input_ref.clone();
+        use_effect_with_deps(
+            move |_| {
+                let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
+                input.focus().unwrap();
+            },
+            (),
+        );
+    }
+    {
         let clear = props.clear.clone();
         let clear2 = props.clear.clone();
         let input_ref = input_ref.clone();

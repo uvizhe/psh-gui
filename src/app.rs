@@ -248,6 +248,7 @@ pub fn app() -> Html {
         let alias_handle = alias_handle.clone();
         let alias_handle_user_choice = alias_handle_user_choice.clone();
         let secret = secret.clone();
+        let use_secret = use_secret.clone();
         let charset = charset.clone();
         let charset_user_choice = charset_user_choice.clone();
         Callback::from(move |_| {
@@ -261,7 +262,7 @@ pub fn app() -> Html {
                     } else {
                         Some(ZeroizingString::new(secret.to_string()))
                     };
-                let use_secret = secret_string.is_some();
+                let needs_secret = secret_string.is_some();
                 if *alias_handle != AliasHandle::Remove {
                     let pass = psh.derive_password(
                         &ZeroizingString::new(alias_string.clone()),
@@ -272,7 +273,7 @@ pub fn app() -> Html {
                     if !known_aliases.contains(&alias_string) && *alias_handle == AliasHandle::Store {
                         let res = psh.append_alias_to_db(
                             &ZeroizingString::new(alias_string.clone()),
-                            Some(use_secret),
+                            Some(needs_secret),
                             Some(*charset),
                         );
                         if res.is_ok() {
@@ -293,6 +294,7 @@ pub fn app() -> Html {
                 }
                 alias.set("".to_string());
                 secret.set("".to_string());
+                use_secret.set(true);
                 known_alias.set(false);
                 alias_handle.set(AliasHandle::Store);
                 alias_handle_user_choice.set(AliasHandle::Store);

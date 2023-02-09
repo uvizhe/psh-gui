@@ -67,9 +67,14 @@ input[type="text"] {
 input[type="password"] {
   width: 14em;
 }
+input[type="password"]:disabled {
+  filter: opacity(20%);
+}
 input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
+  background-color: whitesmoke;
+  border: 3px solid whitesmoke;
   border-radius: 50%;
   padding: 4px;
 }
@@ -78,8 +83,7 @@ input[type="radio"]:enabled {
   border: 3px solid whitesmoke;
 }
 input[type="radio"]:disabled {
-  background-color: rgb(80, 55, 55);
-  border: 3px solid rgb(80, 55, 55);
+  filter: opacity(20%);
 }
 input[type="radio"]:checked {
   background-color: rgb(27, 27, 27);

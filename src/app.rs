@@ -10,8 +10,6 @@ use components::alias_input::AliasInput;
 use components::secret_input::SecretInput;
 use components::triswitch::Triswitch;
 
-const MP: &str = "password";
-
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
@@ -36,6 +34,12 @@ fn collect_aliases(psh: &Psh) -> Vec<String> {
 pub fn app() -> Html {
     // Psh instance
     let psh = use_mut_ref(|| OnceCell::<Psh>::new());
+    // If psh is initialized (user entered right password)
+    let initialized = use_state(|| false);
+    // Master password
+    let master_password = use_state(|| String::new());
+    // 'Master password is wrong' flag
+    let mp_wrong = use_state(|| false);
     // Aliases that are stored in psh database
     let known_aliases = use_state(|| Vec::<String>::new());
     // Currently input alias
@@ -57,34 +61,47 @@ pub fn app() -> Html {
     // Derived password
     let password_msg = use_state(|| String::new());
 
+    // Variables derived from state
+
     let can_derive_password =  !(*alias).trim().is_empty()
         && ((*use_secret && !(*secret).is_empty())
             || !*use_secret
             || !*known_alias);
+
     let can_process =
         if *alias_handle == AliasHandle::Remove { *known_alias }
         else { can_derive_password };
 
-    {
-        let psh = psh.clone();
-        let known_aliases = known_aliases.clone();
-        use_effect_with_deps(
-            move |_| {
-                let res = psh.borrow_mut().set(
-                    Psh::new(
-                        ZeroizingString::new(MP.to_string()),
-                        PshWebDb::new()
-                    ).unwrap()
-                );
-                if res.is_ok() {
-                    known_aliases.set(collect_aliases(psh.borrow().get().unwrap()));
-                } else {
-                    log("Failed to initialize Psh");
-                }
-            },
-            (),
-        );
-    }
+    let mp_sufficient_len = (*master_password).len() >= 8;
+
+    let match_alias_handle = {
+        match *alias_handle {
+            AliasHandle::Store => 0,
+            AliasHandle::Ignore => 1,
+            AliasHandle::Remove => 2,
+        }
+    };
+
+    let match_charset = {
+        match *charset {
+            CharSet::Standard => 0,
+            CharSet::RequireAll => 1,
+            CharSet::Reduced => 2,
+        }
+    };
+
+    // Callbacks
+
+    // Form input handlers
+
+    let on_password_input: Callback<String> = {
+        let master_password = master_password.clone();
+        let mp_wrong = mp_wrong.clone();
+        Callback::from(move |input: String| {
+            master_password.set(input.clone());
+            mp_wrong.set(false);
+        })
+    };
 
     let on_alias_input: Callback<(String, bool)> = {
         let psh = psh.clone();
@@ -121,12 +138,14 @@ pub fn app() -> Html {
             password_msg.set("".to_string());
         })
     };
+
     let on_secret_input: Callback<String> = {
         let secret = secret.clone();
         Callback::from(move |input: String| {
             secret.set(input.clone());
         })
     };
+
     let set_alias_handle = {
         let alias_handle = alias_handle.clone();
         let alias_handle_user_choice = alias_handle_user_choice.clone();
@@ -148,6 +167,7 @@ pub fn app() -> Html {
             }
         })
     };
+
     let set_charset = {
         let charset = charset.clone();
         let charset_user_choice = charset_user_choice.clone();
@@ -169,6 +189,32 @@ pub fn app() -> Html {
             }
         })
     };
+
+    // Form processing handlers
+
+    let login = {
+        let psh = psh.clone();
+        let initialized = initialized.clone();
+        let master_password = master_password.clone();
+        let mp_wrong = mp_wrong.clone();
+        let known_aliases = known_aliases.clone();
+        Callback::from(move |_| {
+            let res = Psh::new(
+                ZeroizingString::new((*master_password).clone()),
+                PshWebDb::new()
+            );
+            if let Ok(psh_instance) = res {
+                initialized.set(true);
+                known_aliases.set(collect_aliases(&psh_instance));
+                psh.borrow_mut().set(psh_instance).ok();
+            } else {
+                mp_wrong.set(true);
+                log(&format!("Failed to initialize Psh: {}", res.err().unwrap()));
+            }
+            master_password.set("".to_string());
+        })
+    };
+
     let process = {
         let password_msg = password_msg.clone();
         let psh = psh.clone();
@@ -231,26 +277,13 @@ pub fn app() -> Html {
             }
         })
     };
-    let match_alias_handle = {
-        match *alias_handle {
-            AliasHandle::Store => 0,
-            AliasHandle::Ignore => 1,
-            AliasHandle::Remove => 2,
-        }
-    };
-    let match_charset = {
-        match *charset {
-            CharSet::Standard => 0,
-            CharSet::RequireAll => 1,
-            CharSet::Reduced => 2,
-        }
-    };
 
     let known_aliases = (*known_aliases).clone();
     let password_msg = (*password_msg).clone();
 
     html! {
         <main class="container">
+        if *initialized {
             <div class="element password">
                 <strong>{ &*password_msg }</strong>
             </div>
@@ -262,6 +295,7 @@ pub fn app() -> Html {
             <SecretInput
                 clear={!password_msg.is_empty()}
                 disabled={!*use_secret}
+                hint="Enter secret..."
                 on_input={on_secret_input.clone()}
             />
             <div class="element">
@@ -292,6 +326,21 @@ pub fn app() -> Html {
                     "Reduced".to_string()]}
                 on_switch={set_charset.clone()}
             />
+        } else {
+            <SecretInput
+                clear={*mp_wrong}
+                hint="Enter master password..."
+                on_input={on_password_input.clone()}
+            />
+            <div class="element">
+                <button type="button" onclick={login} disabled={!mp_sufficient_len}>
+                    {"Enter"}
+                </button>
+            </div>
+            if *mp_wrong {
+                <div class="element">{"Wrong master password"}</div>
+            }
+        }
         </main>
     }
 }

@@ -3,7 +3,9 @@ use yew::prelude::*;
 #[derive(Properties, PartialEq)]
 pub struct SecretInputProps {
     pub clear: bool,
+    #[prop_or_default]
     pub disabled: bool,
+    pub hint: String,
     pub on_input: Callback<String>,
 }
 
@@ -42,7 +44,7 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
                 id="secret-input"
                 oninput={on_input}
                 ref={input_ref}
-                placeholder="Enter secret..."
+                placeholder={props.hint.clone()}
                 disabled={props.disabled}
             />
         </div>

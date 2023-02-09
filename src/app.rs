@@ -2,7 +2,7 @@ use once_cell::sync::OnceCell;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
-use psh::{CharSet, Psh, PshWebDb, ZeroizingString};
+use psh::{CharSet, Psh, PshStore, PshWebDb, ZeroizingString};
 
 mod components;
 
@@ -38,6 +38,8 @@ pub fn app() -> Html {
     let initialized = use_state(|| false);
     // Master password
     let master_password = use_state(|| String::new());
+    // Second master password value (from second input) on db initialization
+    let master_password2 = use_state(|| String::new());
     // 'Master password is wrong' flag
     let mp_wrong = use_state(|| false);
     // Aliases that are stored in psh database
@@ -63,6 +65,12 @@ pub fn app() -> Html {
 
     // Variables derived from state
 
+    let db_initialized = *initialized || PshWebDb::new().exists();
+
+    let mp_sufficient_len = (*master_password).len() >= 8;
+
+    let mps_match = db_initialized || master_password == master_password2;
+
     let can_derive_password =  !(*alias).trim().is_empty()
         && ((*use_secret && !(*secret).is_empty())
             || !*use_secret
@@ -71,8 +79,6 @@ pub fn app() -> Html {
     let can_process =
         if *alias_handle == AliasHandle::Remove { *known_alias }
         else { can_derive_password };
-
-    let mp_sufficient_len = (*master_password).len() >= 8;
 
     let match_alias_handle = {
         match *alias_handle {
@@ -90,6 +96,17 @@ pub fn app() -> Html {
         }
     };
 
+    // Initialize state on first render
+    /*
+    let psh_db = psh_db.clone();
+    use_effect_with_deps
+        move |_| {
+            psh_db
+        },
+        (),
+    );
+    */
+
     // Callbacks
 
     // Form input handlers
@@ -100,6 +117,13 @@ pub fn app() -> Html {
         Callback::from(move |input: String| {
             master_password.set(input.clone());
             mp_wrong.set(false);
+        })
+    };
+
+    let on_password2_input: Callback<String> = {
+        let master_password2 = master_password2.clone();
+        Callback::from(move |input: String| {
+            master_password2.set(input.clone());
         })
     };
 
@@ -201,7 +225,7 @@ pub fn app() -> Html {
         Callback::from(move |_| {
             let res = Psh::new(
                 ZeroizingString::new((*master_password).clone()),
-                PshWebDb::new()
+                PshWebDb::new(),
             );
             if let Ok(psh_instance) = res {
                 initialized.set(true);
@@ -295,6 +319,7 @@ pub fn app() -> Html {
             <SecretInput
                 clear={!password_msg.is_empty()}
                 disabled={!*use_secret}
+                id="secret-input"
                 hint="Enter secret..."
                 on_input={on_secret_input.clone()}
             />
@@ -329,11 +354,22 @@ pub fn app() -> Html {
         } else {
             <SecretInput
                 clear={*mp_wrong}
+                id="mp-input"
                 hint="Enter master password..."
                 on_input={on_password_input.clone()}
             />
+            if !db_initialized {
+                <SecretInput
+                    id="mp2-input"
+                    hint="Repeat master password..."
+                    on_input={on_password2_input.clone()}
+                />
+                <div class="element">
+                    {"Warning: if you forget your Master Password you won't be able to get your passwords"}
+                </div>
+            }
             <div class="element">
-                <button type="button" onclick={login} disabled={!mp_sufficient_len}>
+                <button type="button" onclick={login} disabled={!mp_sufficient_len || !mps_match}>
                     {"Enter"}
                 </button>
             </div>

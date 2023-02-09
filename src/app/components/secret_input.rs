@@ -2,9 +2,11 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct SecretInputProps {
+    #[prop_or_default]
     pub clear: bool,
     #[prop_or_default]
     pub disabled: bool,
+    pub id: String,
     pub hint: String,
     pub on_input: Callback<String>,
 }
@@ -41,7 +43,9 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
     html! {
         <div class="element">
             <input type="password"
-                id="secret-input"
+                id={props.id.clone()}
+                name={props.id.clone()}
+                key={props.id.clone()}
                 oninput={on_input}
                 ref={input_ref}
                 placeholder={props.hint.clone()}

@@ -6,6 +6,8 @@ pub struct SecretInputProps {
     pub clear: bool,
     #[prop_or_default]
     pub disabled: bool,
+    #[prop_or_default]
+    pub focus: bool,
     pub id: String,
     pub hint: String,
     pub on_input: Callback<String>,
@@ -15,6 +17,19 @@ pub struct SecretInputProps {
 pub fn secret_input(props: &SecretInputProps) -> Html {
     let input_ref = use_node_ref();
 
+    {
+        let input_ref = input_ref.clone();
+        let focus = props.focus.clone();
+        use_effect_with_deps(
+            move |_| {
+                if focus {
+                    let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
+                    input.focus().unwrap();
+                }
+            },
+            (),
+        );
+    }
     {
         let clear = props.clear.clone();
         let clear2 = props.clear.clone();

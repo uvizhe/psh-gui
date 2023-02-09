@@ -351,6 +351,7 @@ pub fn app() -> Html {
         } else {
             <SecretInput
                 clear={*mp_wrong}
+                focus=true
                 id="mp-input"
                 hint="Enter master password..."
                 on_input={on_password_input.clone()}

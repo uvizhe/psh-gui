@@ -62,6 +62,8 @@ pub fn app() -> Html {
     let known_alias = use_state(|| false);
     // Derived password
     let password_msg = use_state(|| String::new());
+    // Password element NodeRef
+    let password_ref = use_node_ref();
 
     // Variables derived from state
 
@@ -95,17 +97,6 @@ pub fn app() -> Html {
             CharSet::Reduced => 2,
         }
     };
-
-    // Initialize state on first render
-    /*
-    let psh_db = psh_db.clone();
-    use_effect_with_deps
-        move |_| {
-            psh_db
-        },
-        (),
-    );
-    */
 
     // Callbacks
 
@@ -241,6 +232,7 @@ pub fn app() -> Html {
 
     let process = {
         let password_msg = password_msg.clone();
+        let password_ref = password_ref.clone();
         let psh = psh.clone();
         let alias = alias.clone();
         let known_aliases = known_aliases.clone();
@@ -300,6 +292,9 @@ pub fn app() -> Html {
                 alias_handle_user_choice.set(AliasHandle::Store);
                 charset.set(CharSet::Standard);
                 charset_user_choice.set(CharSet::Standard);
+                // Focus on Password element to move focus away from button
+                let el = password_ref.cast::<web_sys::HtmlElement>().unwrap();
+                el.focus().unwrap();
             }
         })
     };
@@ -310,23 +305,21 @@ pub fn app() -> Html {
     html! {
         <main class="container">
         if *initialized {
-            <div class="element password">
+            <div class="element password" ref={password_ref} tabindex="-1">
                 <strong>{ &*password_msg }</strong>
             </div>
-            <form> // This ensures that inputs focus with Tab in right order (before triswitches)
-                <AliasInput
-                    clear={!password_msg.is_empty()}
-                    {known_aliases}
-                    on_input={on_alias_input.clone()}
-                />
-                <SecretInput
-                    clear={!password_msg.is_empty() || !*use_secret}
-                    disabled={!*use_secret}
-                    id="secret-input"
-                    hint="Enter secret..."
-                    on_input={on_secret_input.clone()}
-                />
-            </form>
+            <AliasInput
+                clear={!password_msg.is_empty()}
+                {known_aliases}
+                on_input={on_alias_input.clone()}
+            />
+            <SecretInput
+                clear={!password_msg.is_empty() || !*use_secret}
+                disabled={!*use_secret}
+                id="secret-input"
+                hint="Enter secret..."
+                on_input={on_secret_input.clone()}
+            />
             <div class="element">
                 <button type="button" onclick={process} disabled={!can_process}>
                     { if *alias_handle != AliasHandle::Remove {"Get password"}

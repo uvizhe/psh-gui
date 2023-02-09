@@ -44,6 +44,9 @@ fieldset input {
   border-top: 1px solid;
   border-bottom: 1px solid;
 }
+.password:focus {
+  outline: none;
+}
 .password strong {
   display: inline-block;
   text-align: center;

@@ -9,6 +9,7 @@ mod components;
 use components::alias_input::AliasInput;
 use components::secret_input::SecretInput;
 use components::triswitch::Triswitch;
+use components::keyboard::Keyboard;
 
 #[wasm_bindgen]
 extern "C" {
@@ -205,6 +206,14 @@ pub fn app() -> Html {
         })
     };
 
+    // Keyboard handler
+
+    let on_kb_input = {
+        Callback::from(move |value: String| {
+            log(&value);
+        })
+    };
+
     // Form processing handlers
 
     let login = {
@@ -349,6 +358,15 @@ pub fn app() -> Html {
                 on_switch={set_charset.clone()}
             />
         } else {
+            <div
+                class={classes!( "element", if *mp_wrong { None } else { Some("hidden") })}>
+                    {"Wrong master password"}
+            </div>
+            if !db_initialized {
+                <div class="element">
+                    {"Warning: if you forget your Master Password you won't be able to retrieve your passwords"}
+                </div>
+            }
             <SecretInput
                 clear={*mp_wrong}
                 focus=true
@@ -362,19 +380,14 @@ pub fn app() -> Html {
                     hint="Repeat master password..."
                     on_input={on_password2_input.clone()}
                 />
-                <div class="element">
-                    {"Warning: if you forget your Master Password you won't be able to retrieve your passwords"}
-                </div>
             }
             <div class="element">
                 <button type="button" onclick={login} disabled={!mp_sufficient_len || !mps_match}>
                     {"Enter"}
                 </button>
             </div>
-            if *mp_wrong {
-                <div class="element">{"Wrong master password"}</div>
-            }
         }
+            <Keyboard on_input={on_kb_input} />
         </main>
     }
 }

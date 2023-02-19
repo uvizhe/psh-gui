@@ -20,7 +20,8 @@ wasm-bindgen = "0.2.83"
 web-sys = "0.3.59"
 yew = { version="0.20", features=["csr"] }
 
-psh = { path = "../psh", default-features = false, features = ["web"] }
+psh = { path = "../psh" }
+psh-webdb = { path = "../psh/webdb" }
 
 [workspace]
 members = ["src-tauri"]

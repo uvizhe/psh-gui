@@ -11,6 +11,7 @@ pub struct SecretInputProps {
     pub id: String,
     pub hint: String,
     pub on_input: Callback<String>,
+    pub on_focus: Callback<NodeRef>,
 }
 
 #[function_component(SecretInput)]
@@ -55,6 +56,14 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
         })
     };
 
+    let on_focus = {
+        let input_ref = input_ref.clone();
+        let on_focus = props.on_focus.clone();
+        Callback::from(move |_| {
+            on_focus.emit(input_ref.clone());
+        })
+    };
+
     html! {
         <div class="element">
             <input type="password"
@@ -62,6 +71,7 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
                 name={props.id.clone()}
                 key={props.id.clone()}
                 oninput={on_input}
+                onfocus={on_focus}
                 ref={input_ref}
                 placeholder={props.hint.clone()}
                 disabled={props.disabled}

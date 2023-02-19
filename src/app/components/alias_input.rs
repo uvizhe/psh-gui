@@ -5,6 +5,7 @@ pub struct AliasInputProps {
     pub clear: bool,
     pub known_aliases: Vec<String>,
     pub on_input: Callback<(String, bool)>,
+    pub on_focus: Callback<NodeRef>,
 }
 
 #[function_component(AliasInput)]
@@ -48,11 +49,20 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
         })
     };
 
+    let on_focus = {
+        let input_ref = input_ref.clone();
+        let on_focus = props.on_focus.clone();
+        Callback::from(move |_| {
+            on_focus.emit(input_ref.clone());
+        })
+    };
+
     html! {
         <div class="element">
             <input type="text"
                 id="alias-input"
                 oninput={check_alias}
+                onfocus={on_focus}
                 list="aliases"
                 ref={input_ref}
                 placeholder="Enter alias..."

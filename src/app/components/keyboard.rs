@@ -10,11 +10,6 @@ pub enum KbSlot {
 
 const KEYBOARD_LAYOUT: [[KbSlot; 10]; 5] = [
     [
-    KbSlot::Pair("`", "~"), KbSlot::Pair("'", "\""), KbSlot::Pair("-", "_"), KbSlot::Pair("=", "+"),
-    KbSlot::Pair("[", "{"), KbSlot::Pair("]", "}"), KbSlot::Pair("\\", "|"), KbSlot::Space,
-    KbSlot::Empty, KbSlot::Empty,
-    ],
-    [
     KbSlot::Pair("1", "!"), KbSlot::Pair("2", "@"), KbSlot::Pair("3", "#"), KbSlot::Pair("4", "$"),
     KbSlot::Pair("5", "%"), KbSlot::Pair("6", "^"), KbSlot::Pair("7", "&"), KbSlot::Pair("8", "*"),
     KbSlot::Pair("9", "("), KbSlot::Pair("0", ")"),
@@ -33,6 +28,11 @@ const KEYBOARD_LAYOUT: [[KbSlot; 10]; 5] = [
     KbSlot::Pair("z", "Z"), KbSlot::Pair("x", "X"), KbSlot::Pair("c", "C"), KbSlot::Pair("v", "V"),
     KbSlot::Pair("b", "B"), KbSlot::Pair("n", "N"), KbSlot::Pair("m", "M"), KbSlot::Pair(",", "<"),
     KbSlot::Pair(".", ">"), KbSlot::Pair("/", "?"),
+    ],
+    [
+    KbSlot::Empty, KbSlot::Empty, KbSlot::Space,
+    KbSlot::Pair("`", "~"), KbSlot::Pair("'", "\""), KbSlot::Pair("-", "_"), KbSlot::Pair("=", "+"),
+    KbSlot::Pair("[", "{"), KbSlot::Pair("]", "}"), KbSlot::Pair("\\", "|"),
     ],
 ];
 

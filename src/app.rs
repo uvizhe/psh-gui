@@ -2,7 +2,8 @@ use once_cell::sync::OnceCell;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
-use psh::{CharSet, Psh, PshStore, PshWebDb, ZeroizingString};
+use psh::{CharSet, Psh, PshStore, ZeroizingString};
+use psh_webdb::PshWebDb;
 
 mod components;
 
@@ -65,6 +66,8 @@ pub fn app() -> Html {
     let password_msg = use_state(|| String::new());
     // Password element NodeRef
     let password_ref = use_node_ref();
+    // NodeRef of currently focused input
+    let input_ref = use_state(|| NodeRef::default());
 
     // Variables derived from state
 
@@ -102,6 +105,13 @@ pub fn app() -> Html {
     // Callbacks
 
     // Form input handlers
+
+    let on_input_focus: Callback<NodeRef> = {
+        let input_ref = input_ref.clone();
+        Callback::from(move |node_ref: NodeRef| {
+            input_ref.set(node_ref);
+        })
+    };
 
     let on_password_input: Callback<String> = {
         let master_password = master_password.clone();
@@ -209,8 +219,35 @@ pub fn app() -> Html {
     // Keyboard handler
 
     let on_kb_input = {
+        let known_aliases = known_aliases.clone();
+        let input_ref = input_ref.clone();
+        let on_password_input = on_password_input.clone();
+        let on_password2_input = on_password2_input.clone();
+        let on_alias_input = on_alias_input.clone();
+        let on_secret_input = on_secret_input.clone();
         Callback::from(move |value: String| {
-            log(&value);
+            if input_ref.get().is_some() {
+                let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
+                // Set focus back to input after click on the keyboard
+                input.focus().unwrap();
+
+                // Fill input with new value
+                let new_value = input.value() + &value;
+                input.set_value(&new_value);
+
+                // Find relative variable in store and change it as well
+                let id = input.id();
+                match id.as_str() {
+                    "mp-input" => on_password_input.emit(new_value),
+                    "mp2-input" => on_password2_input.emit(new_value),
+                    "alias-input" => {
+                        let known = known_aliases.contains(&new_value);
+                        on_alias_input.emit((new_value, known));
+                    }
+                    "secret-input" => on_secret_input.emit(new_value),
+                    _ => unimplemented!()
+                }
+            }
         })
     };
 
@@ -321,6 +358,7 @@ pub fn app() -> Html {
                 clear={!password_msg.is_empty()}
                 {known_aliases}
                 on_input={on_alias_input.clone()}
+                on_focus={on_input_focus.clone()}
             />
             <SecretInput
                 clear={!password_msg.is_empty() || !*use_secret}
@@ -328,6 +366,7 @@ pub fn app() -> Html {
                 id="secret-input"
                 hint="Enter secret..."
                 on_input={on_secret_input.clone()}
+                on_focus={on_input_focus.clone()}
             />
             <div class="element">
                 <button type="button" onclick={process} disabled={!can_process}>
@@ -373,12 +412,14 @@ pub fn app() -> Html {
                 id="mp-input"
                 hint="Enter master password..."
                 on_input={on_password_input.clone()}
+                on_focus={on_input_focus.clone()}
             />
             if !db_initialized {
                 <SecretInput
                     id="mp2-input"
                     hint="Repeat master password..."
                     on_input={on_password2_input.clone()}
+                    on_focus={on_input_focus.clone()}
                 />
             }
             <div class="element">

@@ -354,7 +354,6 @@ pub fn app() -> Html {
 
 
     let known_aliases = (*known_aliases).clone();
-    let password_msg = (*password_msg).clone();
 
     html! {
         <main class="container">
@@ -405,11 +404,13 @@ pub fn app() -> Html {
                 on_switch={set_charset.clone()}
             />
         } else {
-            <div
-                class={classes!( "element", if *mp_wrong { None } else { Some("hidden") })}>
-                    {"Wrong master password"}
-            </div>
-            if !db_initialized {
+            if db_initialized {
+                <div
+                    class={classes!( "element", if *mp_wrong { None } else { Some("hidden") })}
+                >
+                        {"Wrong master password"}
+                </div>
+            } else {
                 <div class="element">
                     {"Warning: if you forget your Master Password you won't be able to retrieve your passwords"}
                 </div>

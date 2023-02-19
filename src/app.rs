@@ -10,6 +10,7 @@ mod components;
 use components::alias_input::AliasInput;
 use components::secret_input::SecretInput;
 use components::triswitch::Triswitch;
+#[cfg(feature = "keyboard")]
 use components::keyboard::Keyboard;
 
 #[wasm_bindgen]
@@ -216,41 +217,6 @@ pub fn app() -> Html {
         })
     };
 
-    // Keyboard handler
-
-    let on_kb_input = {
-        let known_aliases = known_aliases.clone();
-        let input_ref = input_ref.clone();
-        let on_password_input = on_password_input.clone();
-        let on_password2_input = on_password2_input.clone();
-        let on_alias_input = on_alias_input.clone();
-        let on_secret_input = on_secret_input.clone();
-        Callback::from(move |value: String| {
-            if input_ref.get().is_some() {
-                let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
-                // Set focus back to input after click on the keyboard
-                input.focus().unwrap();
-
-                // Fill input with new value
-                let new_value = input.value() + &value;
-                input.set_value(&new_value);
-
-                // Find relative variable in store and change it as well
-                let id = input.id();
-                match id.as_str() {
-                    "mp-input" => on_password_input.emit(new_value),
-                    "mp2-input" => on_password2_input.emit(new_value),
-                    "alias-input" => {
-                        let known = known_aliases.contains(&new_value);
-                        on_alias_input.emit((new_value, known));
-                    }
-                    "secret-input" => on_secret_input.emit(new_value),
-                    _ => unimplemented!()
-                }
-            }
-        })
-    };
-
     // Form processing handlers
 
     let login = {
@@ -345,6 +311,48 @@ pub fn app() -> Html {
         })
     };
 
+    // Keyboard stuff
+
+    #[cfg(feature = "keyboard")]
+    let on_kb_input = {
+        let known_aliases = known_aliases.clone();
+        let input_ref = input_ref.clone();
+        let on_password_input = on_password_input.clone();
+        let on_password2_input = on_password2_input.clone();
+        let on_alias_input = on_alias_input.clone();
+        let on_secret_input = on_secret_input.clone();
+        Callback::from(move |value: String| {
+            if input_ref.get().is_some() {
+                let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
+                // Set focus back to input after click on the keyboard
+                input.focus().unwrap();
+
+                // Fill input with new value
+                let new_value = input.value() + &value;
+                input.set_value(&new_value);
+
+                // Find relative variable in store and change it as well
+                let id = input.id();
+                match id.as_str() {
+                    "mp-input" => on_password_input.emit(new_value),
+                    "mp2-input" => on_password2_input.emit(new_value),
+                    "alias-input" => {
+                        let known = known_aliases.contains(&new_value);
+                        on_alias_input.emit((new_value, known));
+                    }
+                    "secret-input" => on_secret_input.emit(new_value),
+                    _ => unimplemented!()
+                }
+            }
+        })
+    };
+
+    #[cfg(feature = "keyboard")]
+    let maybe_keyboard: Html = html!{ <Keyboard on_input={on_kb_input} /> };
+    #[cfg(not(feature = "keyboard"))]
+    let maybe_keyboard: Html = html!{};
+
+
     let known_aliases = (*known_aliases).clone();
     let password_msg = (*password_msg).clone();
 
@@ -428,7 +436,7 @@ pub fn app() -> Html {
                 </button>
             </div>
         }
-            <Keyboard on_input={on_kb_input} />
+            { maybe_keyboard }
         </main>
     }
 }

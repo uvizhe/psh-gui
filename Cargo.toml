@@ -25,3 +25,6 @@ psh-webdb = { path = "../psh/webdb" }
 
 [workspace]
 members = ["src-tauri"]
+
+[features]
+keyboard = []

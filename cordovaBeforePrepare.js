@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const css_src = 'index.css';
 const css_dst_dir = 'www/css/';
 const wasm_dst_dir = 'node_modules/psh-gui';
-const wasm_pack_cmd = 'wasm-pack build --release --target web --no-typescript';
+const wasm_pack_cmd = 'wasm-pack build --release --target web --no-typescript --features=keyboard';
 
 module.exports = function (context) {
     copyFileSync(css_src, css_dst_dir + css_src);

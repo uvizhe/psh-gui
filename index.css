@@ -122,8 +122,11 @@ label {
   overflow: hidden;
   cursor: pointer;
   user-select: none;
+
+  -webkit-tap-highlight-color: transparent;
 }
 .keyb:active {
+  background-color: rgb(59, 59, 59);
 }
 .keyb-prim {
 }
@@ -143,14 +146,11 @@ label {
   font-size: 1em;
 }
 .shift {
-  color: aquamarine;
   height: unset;
-  line-height: 16px;
-  font-family: sans-serif;
-  font-size: 20px;
-}
-.shift div {
-  transform: scale(1.5, 0.9);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='none' height='256' width='256'/%3E%3Cpolygon fill='none' points='80 140 128 92 176 140 152 140 152 172 104 172 104 140 80 140' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='7'/%3E%3C/svg%3E");
+  background-size: 55px;
+  background-repeat: no-repeat;
+  background-position-x: center;
 }
 .alt {
   color: orange;
@@ -158,6 +158,8 @@ label {
 .backspace {
   height: unset;
   font-family: sans-serif;
+  font-size: 20px;
+  line-height: 0.8em;
 }
 .space {
 }

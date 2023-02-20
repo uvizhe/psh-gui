@@ -171,10 +171,7 @@ pub fn keyboard_key(props: &KeyboardKeyProps) -> Html {
             </div>
         },
         KbSlot::Space => html! {<div class="keyb space" onclick={on_kb_click}>{"⎵"}</div>},
-        KbSlot::Shift => html! {
-            <div class="keyb shift" onclick={on_kb_click}>
-                <div>{"⇧"}</div>
-            </div>
+        KbSlot::Shift => html! {<div class="keyb shift" onclick={on_kb_click}></div>
         },
         KbSlot::Backspace => html! {<div class="keyb backspace" onclick={on_kb_click}>{"⌫"}</div>},
         KbSlot::Alt => html! {<div class="keyb alt" onclick={on_kb_click}>{"Fn"}</div>},

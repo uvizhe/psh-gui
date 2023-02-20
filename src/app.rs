@@ -328,7 +328,15 @@ pub fn app() -> Html {
                 input.focus().unwrap();
 
                 // Fill input with new value
-                let new_value = input.value() + &value;
+                let new_value =
+                    if !value.is_empty() {
+                        input.value() + &value
+                    } else {
+                        // Keyboard sends empty strings on Backspace key presses
+                        let mut new_value = input.value();
+                        new_value.pop();
+                        new_value
+                    };
                 input.set_value(&new_value);
 
                 // Find relative variable in store and change it as well

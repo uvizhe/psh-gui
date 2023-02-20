@@ -1,38 +1,39 @@
-use gloo_timers::callback::Timeout;
 use yew::prelude::*;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum KbSlot {
     Pair(&'static str, &'static str),
+    Sole(&'static str),
     Space,
-    Empty,
+    Shift,
+    Backspace,
+    Alt,
 }
 
-const KEYBOARD_LAYOUT: [[KbSlot; 10]; 5] = [
+const KEYBOARD_LAYOUT: [[KbSlot; 10]; 4] = [
     [
-    KbSlot::Pair("1", "!"), KbSlot::Pair("2", "@"), KbSlot::Pair("3", "#"), KbSlot::Pair("4", "$"),
-    KbSlot::Pair("5", "%"), KbSlot::Pair("6", "^"), KbSlot::Pair("7", "&"), KbSlot::Pair("8", "*"),
-    KbSlot::Pair("9", "("), KbSlot::Pair("0", ")"),
+        KbSlot::Pair("1", "!"), KbSlot::Pair("2", "@"), KbSlot::Pair("3", "#"),
+        KbSlot::Pair("4", "$"), KbSlot::Pair("5", "%"), KbSlot::Pair("6", "^"),
+        KbSlot::Pair("7", "&"), KbSlot::Pair("8", "*"), KbSlot::Pair("9", "("),
+        KbSlot::Pair("0", ")"),
     ],
     [
-    KbSlot::Pair("q", "Q"), KbSlot::Pair("w", "W"), KbSlot::Pair("e", "E"), KbSlot::Pair("r", "R"),
-    KbSlot::Pair("t", "T"), KbSlot::Pair("y", "Y"), KbSlot::Pair("u", "U"), KbSlot::Pair("i", "I"),
-    KbSlot::Pair("o", "O"), KbSlot::Pair("p", "P"),
+        KbSlot::Sole("q"), KbSlot::Sole("w"), KbSlot::Sole("e"),
+        KbSlot::Pair("r", "="), KbSlot::Pair("t", "-"), KbSlot::Pair("y", "+"),
+        KbSlot::Pair("u", "{"), KbSlot::Pair("i", "}"), KbSlot::Pair("o", "["),
+        KbSlot::Pair("p", "]"),
     ],
     [
-    KbSlot::Pair("a", "A"), KbSlot::Pair("s", "S"), KbSlot::Pair("d", "D"), KbSlot::Pair("f", "F"),
-    KbSlot::Pair("g", "G"), KbSlot::Pair("h", "H"), KbSlot::Pair("j", "J"), KbSlot::Pair("k", "K"),
-    KbSlot::Pair("l", "L"), KbSlot::Pair(";", ":"),
+        KbSlot::Pair("a", "~"), KbSlot::Pair("s", "`"), KbSlot::Sole("d"),
+        KbSlot::Pair("f", "_"), KbSlot::Pair("g", "/"), KbSlot::Pair("h", "|"),
+        KbSlot::Pair("j", "\\"), KbSlot::Pair("k", "<"), KbSlot::Pair("l", ">"),
+        KbSlot::Shift,
     ],
     [
-    KbSlot::Pair("z", "Z"), KbSlot::Pair("x", "X"), KbSlot::Pair("c", "C"), KbSlot::Pair("v", "V"),
-    KbSlot::Pair("b", "B"), KbSlot::Pair("n", "N"), KbSlot::Pair("m", "M"), KbSlot::Pair(",", "<"),
-    KbSlot::Pair(".", ">"), KbSlot::Pair("/", "?"),
-    ],
-    [
-    KbSlot::Empty, KbSlot::Empty, KbSlot::Space,
-    KbSlot::Pair("`", "~"), KbSlot::Pair("'", "\""), KbSlot::Pair("-", "_"), KbSlot::Pair("=", "+"),
-    KbSlot::Pair("[", "{"), KbSlot::Pair("]", "}"), KbSlot::Pair("\\", "|"),
+        KbSlot::Pair("z", "\""), KbSlot::Pair("x", "'"), KbSlot::Pair("c", ":"),
+        KbSlot::Pair("v", ";"), KbSlot::Pair("b", ","), KbSlot::Pair("n", "."),
+        KbSlot::Pair("m", "?"), KbSlot::Space, KbSlot::Alt,
+        KbSlot::Backspace,
     ],
 ];
 
@@ -43,60 +44,50 @@ pub struct KeyboardProps {
 
 #[function_component(Keyboard)]
 pub fn keyboard(props: &KeyboardProps) -> Html {
-    let temp_value = use_mut_ref(|| (KbSlot::Empty, false));
-    let timeout = use_mut_ref(|| None::<Timeout>);
+    let shift_is_pressed = use_state(|| false);
+    let alt_is_pressed = use_state(|| false);
 
     let on_kb_input = {
-        let temp_value = temp_value.clone();
-        let timeout = timeout.clone();
+        let shift_is_pressed = shift_is_pressed.clone();
+        let alt_is_pressed = alt_is_pressed.clone();
         let on_input = props.on_input.clone();
         Callback::from(move |key: KbSlot| {
-            let temp_value2 = temp_value.clone();
-            let on_input2 = on_input.clone();
-            let current_key = temp_value.borrow().0.clone();
-            let current_is_primary = temp_value.borrow().1;
-            // If new keyboard key is pressed
-            if key != current_key {
-                let emitted_value = match current_key {
-                    KbSlot::Pair(a, b) => {
-                        if current_is_primary { a }
-                        else { b }
+            match key {
+                KbSlot::Pair(a, b) => {
+                    if *shift_is_pressed {
+                        on_input.emit(a.to_uppercase());
+                        shift_is_pressed.set(false);
+                    } else if *alt_is_pressed {
+                        on_input.emit(b.to_string());
+                        alt_is_pressed.set(false);
+                    } else {
+                        on_input.emit(a.to_string());
                     }
-                    KbSlot::Space => " ",
-                    KbSlot::Empty => "",
-                };
-                *temp_value.borrow_mut() = (key, true);
-                if current_key != KbSlot::Empty {
-                    on_input.emit(emitted_value.to_string());
                 }
-            }
-            // If the same keyboard key is pressed
-            else {
-                *temp_value.borrow_mut() = (key, !current_is_primary);
-            }
-            // (Re)set timeout to emit current (last) key
-            let current_key = temp_value.borrow().0.clone();
-            let current_is_primary = temp_value.borrow().1;
-            if timeout.borrow().is_some() {
-                let timeout = timeout.borrow_mut().take().unwrap();
-                timeout.cancel();
-            }
-            if current_key == KbSlot::Space {
-                on_input.emit(" ".to_string());
-                *temp_value.borrow_mut() = (KbSlot::Empty, false);
-            } else {
-                *timeout.borrow_mut() = Some(Timeout::new(1_000, move || {
-                    let emitted_value = match current_key {
-                        KbSlot::Pair(a, b) => {
-                            if current_is_primary { a }
-                            else { b }
-                        }
-                        KbSlot::Space | KbSlot::Empty => unreachable!(),
-                    };
-                    on_input2.emit(emitted_value.to_string());
-                    // XXX: Potential race condition
-                    *temp_value2.borrow_mut() = (KbSlot::Empty, false);
-                }));
+                KbSlot::Sole(a) => {
+                    if *shift_is_pressed {
+                        on_input.emit(a.to_uppercase());
+                        shift_is_pressed.set(false);
+                    } else if *alt_is_pressed { // TODO: disable keys that can't produce value
+                        alt_is_pressed.set(false);
+                    } else {
+                        on_input.emit(a.to_string());
+                    }
+                }
+                KbSlot::Space => on_input.emit(" ".to_string()),
+                KbSlot::Shift => {
+                    shift_is_pressed.set(!*shift_is_pressed);
+                    alt_is_pressed.set(false);
+                }
+                KbSlot::Alt => {
+                    alt_is_pressed.set(!*alt_is_pressed);
+                    shift_is_pressed.set(false);
+                }
+                KbSlot::Backspace => {
+                    shift_is_pressed.set(false);
+                    alt_is_pressed.set(false);
+                    on_input.emit("".to_string());
+                }
             }
         })
     };
@@ -109,7 +100,14 @@ pub fn keyboard(props: &KeyboardProps) -> Html {
                     <div class="row">
                     {
                         row.iter().map(|slot| {
-                            html!{<KeyboardKey kbkey={*slot} on_click={on_kb_input.clone()} />}
+                            html!{
+                                <KeyboardKey
+                                    kbkey={*slot}
+                                    upper={*shift_is_pressed}
+                                    alt={*alt_is_pressed}
+                                    on_click={on_kb_input.clone()}
+                                />
+                            }
                         }).collect::<Html>()
                     }
                     </div>
@@ -123,6 +121,8 @@ pub fn keyboard(props: &KeyboardProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct KeyboardKeyProps {
     pub kbkey: KbSlot,
+    pub upper: bool,
+    pub alt: bool,
     pub on_click: Callback<KbSlot>,
 }
 
@@ -137,8 +137,46 @@ pub fn keyboard_key(props: &KeyboardKeyProps) -> Html {
     };
 
     match props.kbkey {
-        KbSlot::Pair(a, b) =>  html! {<div class="keyb" onclick={on_kb_click}>{a}{b}</div>},
-        KbSlot::Space =>  html! {<div class="keyb" onclick={on_kb_click}>{"⎵"}</div>},
-        KbSlot::Empty => html! {<div class="keyb hidden">{"&nbsp;"}</div>},
+        KbSlot::Pair(a, b) => html! {
+            <div class="keyb" onclick={on_kb_click}>
+                <div
+                    class={classes!(
+                        if props.upper { Some("keyb-upper") } else { None },
+                        if props.alt { Some("hidden") } else { Some("keyb-prim") }
+                    )}
+                >
+                    {a}
+                </div>
+                <div
+                    class={classes!(
+                        "keyb-alt",
+                        if props.alt { Some("keyb-prim") } else { None }
+                    )}
+                >
+                    {b}
+                </div>
+            </div>
+        },
+        KbSlot::Sole(a) => html! {
+            <div class="keyb" onclick={on_kb_click}>
+                <div
+                    class={classes!(
+                        "keyb-prim",
+                        if props.upper { Some("keyb-upper") } else { None },
+                        if props.alt { Some("hidden") } else { None }
+                    )}
+                >
+                    {a}
+                </div>
+            </div>
+        },
+        KbSlot::Space => html! {<div class="keyb space" onclick={on_kb_click}>{"⎵"}</div>},
+        KbSlot::Shift => html! {
+            <div class="keyb shift" onclick={on_kb_click}>
+                <div>{"⇧"}</div>
+            </div>
+        },
+        KbSlot::Backspace => html! {<div class="keyb backspace" onclick={on_kb_click}>{"⌫"}</div>},
+        KbSlot::Alt => html! {<div class="keyb alt" onclick={on_kb_click}>{"Fn"}</div>},
     }
 }

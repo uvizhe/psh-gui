@@ -23,6 +23,7 @@ fieldset input {
 }
 .element {
   margin: 1em 0;
+  max-width: 600px;
 }
 .full-width {
   width: 95%;
@@ -102,31 +103,61 @@ label {
   visibility: hidden;
 }
 .keyb {
-  width: 9vw;
-  max-width: 4.5em;
-  height: 2em;
-  line-height: 2em;
-  margin: 0.1em;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: end;
+  padding-bottom: 0.5em;
+
+  width: 8.8vw;
+  height: 2.5em;
+  margin: 2px;
   text-align: center;
   font-family: monospace;
   font-size: 16px;
-  letter-spacing: 0.1em;
 
+  background: black;
   color: whitesmoke;
-  box-shadow: 0em 0.1em 0.4em 0em black;
+  border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
-  text-shadow: 0.2em 0.2em 0.6em rgba(245,245,245,0.5),
-               0.2em -0.2em 0.6em rgba(245,245,245,0.5),
-               -0.2em 0.2em 0.6em rgba(245,245,245,0.5),
-               -0.2em -0.2em 0.6em rgba(245,245,245,0.5);
   user-select: none;
 }
 .keyb:active {
-  box-shadow: inset 0em 0.1em 0.2em 0em black,
-              inset 0em -0.1em 0.2em 0em black;
-  text-shadow: 0.2em 0.2em 0.6em rgba(245,245,245,0.4),
-               0.2em -0.2em 0.6em rgba(245,245,245,0.4),
-               -0.2em 0.2em 0.6em rgba(245,245,245,0.4),
-               -0.2em -0.2em 0.6em rgba(245,245,245,0.4);
+}
+.keyb-prim {
+}
+.keyb-upper {
+  text-transform: uppercase;
+}
+.keyb-alt {
+  color: orange;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 11px;
+}
+.keyb-prim.keyb-alt {
+  top: 7px;
+  right: 7px;
+  font-size: 1em;
+}
+.shift {
+  color: aquamarine;
+  height: unset;
+  line-height: 16px;
+  font-family: sans-serif;
+  font-size: 20px;
+}
+.shift div {
+  transform: scale(1.5, 0.9);
+}
+.alt {
+  color: orange;
+}
+.backspace {
+  height: unset;
+  font-family: sans-serif;
+}
+.space {
 }

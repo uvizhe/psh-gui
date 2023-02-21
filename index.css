@@ -2,8 +2,8 @@
   font-size: 1em;
 }
 body {
-  background-color: rgb(27, 27, 27);
   color: gray;
+  background-color: rgba(120, 120, 120, 0.04);
 }
 .container {
   margin: 0 auto;
@@ -14,33 +14,34 @@ body {
   min-width: 300px;
   max-width: 1000px;
  }
-fieldset {
-  margin: 1em 0;
-  border: 1px solid;
-}
-fieldset input {
-  margin-bottom: 0.2em;
-}
 .element {
-  margin: 1em 0;
+  margin: 0.5em 0;
   max-width: 600px;
 }
 .full-width {
   width: 95%;
+}
+button {
+  width: 13.5em;
+  height: 2.5em;
+  box-sizing: content-box;
+  margin: 1.5em 0;
 }
 .password {
   height: 2em;
 }
 .password::before {
   content: "";
-  padding-left: 0.5em;
+  padding: 0.5em;
+  padding-right: 0;
   border-left: 1px solid;
   border-top: 1px solid;
   border-bottom: 1px solid;
 }
 .password::after {
   content: "";
-  padding-right: 0.5em;
+  padding: 0.5em;
+  padding-left: 0;
   border-right: 1px solid;
   border-top: 1px solid;
   border-bottom: 1px solid;
@@ -55,21 +56,36 @@ fieldset input {
   font-family: monospace;
   font-size: 16px;
 }
+fieldset input {
+  margin-bottom: 0.2em;
+}
+fieldset {
+  color: gray;
+  border: 1px solid gray;
+  margin: 0.5em 0;
+}
+legend {
+  padding: 0 6px;
+}
 .switch-wrapper {
   display: flex;
   justify-content: space-between;
+  margin: -0.1em;
 }
 .switch {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 30%;
+  font-size: 0.9em;
 }
 input[type="text"] {
   width: 14em;
+  height: 2.5em;
 }
 input[type="password"] {
   width: 14em;
+  height: 2.5em;
 }
 input[type="password"]:disabled {
   filter: opacity(20%);
@@ -77,20 +93,20 @@ input[type="password"]:disabled {
 input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
-  background-color: whitesmoke;
-  border: 3px solid whitesmoke;
+  background-color: gray;
+  border: 3px solid gray;
   border-radius: 50%;
   padding: 4px;
 }
 input[type="radio"]:enabled {
-  background-color: whitesmoke;
-  border: 3px solid whitesmoke;
+  background-color: gray;
+  border: 3px solid gray;
 }
 input[type="radio"]:disabled {
   filter: opacity(20%);
 }
 input[type="radio"]:checked {
-  background-color: rgb(27, 27, 27);
+  background-color: black;
 }
 label {
   margin: 0 auto;
@@ -103,6 +119,7 @@ label {
   visibility: hidden;
 }
 .keyboard {
+  margin: 0.5em 0;
   max-width: 600px;
 }
 .keyb {
@@ -113,13 +130,13 @@ label {
   padding-bottom: 0.5em;
 
   width: 8.8vw;
-  height: 2.5em;
+  height: 2em;
   margin: 2px;
   text-align: center;
   font-family: monospace;
-  font-size: 16px;
+  font-size: 20px;
 
-  background: black;
+  background: rgb(50, 50, 50);
   color: whitesmoke;
   border-radius: 6px;
   overflow: hidden;
@@ -129,7 +146,7 @@ label {
   -webkit-tap-highlight-color: transparent;
 }
 .keyb:active {
-  background-color: rgb(59, 59, 59);
+  background-color: black;
 }
 .keyb-prim {
 }
@@ -151,7 +168,7 @@ label {
 .shift {
   height: unset;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='none' height='256' width='256'/%3E%3Cpolygon fill='none' points='80 140 128 92 176 140 152 140 152 172 104 172 104 140 80 140' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='7'/%3E%3C/svg%3E");
-  background-size: 55px;
+  background-size: 52px;
   background-repeat: no-repeat;
   background-position-x: center;
 }
@@ -162,7 +179,7 @@ label {
   height: unset;
   font-family: sans-serif;
   font-size: 20px;
-  line-height: 0.8em;
+  line-height: 1.2em;
 }
 .space {
 }
@@ -171,12 +188,13 @@ label {
   width: 100%;
   cursor: pointer;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.keyb-gate:active {
+  background-color: black;
 }
 .keyb-gate-msg {
   padding-right: 7px;
-  font-family: monospace;
-  font-variant: all-small-caps;
-  font-size: 20px;
 }
 .keyb-gate-msg.open::before {
   content: "▼";
@@ -189,8 +207,8 @@ label {
 .keyb-gate hr {
   flex: 1;
   background-color: gray;
-  border-color: rgb(27, 27, 27);
+  border-color: rgba(0, 0, 0, 0);
   position: relative;
   top: 4px;
-  height: 1px;
+  height: 0;
 }

@@ -102,6 +102,9 @@ label {
 .hidden {
   visibility: hidden;
 }
+.keyboard {
+  max-width: 600px;
+}
 .keyb {
   position: relative;
   display: flex;
@@ -162,4 +165,32 @@ label {
   line-height: 0.8em;
 }
 .space {
+}
+.keyb-gate {
+  display: flex;
+  width: 100%;
+  cursor: pointer;
+  user-select: none;
+}
+.keyb-gate-msg {
+  padding-right: 7px;
+  font-family: monospace;
+  font-variant: all-small-caps;
+  font-size: 20px;
+}
+.keyb-gate-msg.open::before {
+  content: "▼";
+  padding-right: 5px;
+}
+.keyb-gate-msg.closed::before {
+  content: "▶";
+  padding-right: 5px;
+}
+.keyb-gate hr {
+  flex: 1;
+  background-color: gray;
+  border-color: rgb(27, 27, 27);
+  position: relative;
+  top: 4px;
+  height: 1px;
 }

@@ -11,7 +11,7 @@ use components::alias_input::AliasInput;
 use components::secret_input::SecretInput;
 use components::triswitch::Triswitch;
 #[cfg(feature = "keyboard")]
-use components::keyboard::Keyboard;
+use components::keyboard::{Keyboard, KeyboardDrawer};
 
 #[wasm_bindgen]
 extern "C" {
@@ -69,6 +69,9 @@ pub fn app() -> Html {
     let password_ref = use_node_ref();
     // NodeRef of currently focused input
     let input_ref = use_state(|| NodeRef::default());
+    // Visibility of keyboard
+    #[cfg(feature = "keyboard")]
+    let kb_visible = use_state(|| true);
 
     // Variables derived from state
 
@@ -314,6 +317,14 @@ pub fn app() -> Html {
     // Keyboard stuff
 
     #[cfg(feature = "keyboard")]
+    let on_kb_drawer_click = {
+        let kb_visible = kb_visible.clone();
+        Callback::from(move |visible: bool| {
+            kb_visible.set(visible);
+        })
+    };
+
+    #[cfg(feature = "keyboard")]
     let on_kb_input = {
         let known_aliases = known_aliases.clone();
         let input_ref = input_ref.clone();
@@ -356,7 +367,12 @@ pub fn app() -> Html {
     };
 
     #[cfg(feature = "keyboard")]
-    let maybe_keyboard: Html = html!{ <Keyboard on_input={on_kb_input} /> };
+    let maybe_keyboard: Html = html!{
+        <>
+            <KeyboardDrawer on_click={on_kb_drawer_click} />
+            <Keyboard visible={*kb_visible} on_input={on_kb_input} />
+        </>
+    };
     #[cfg(not(feature = "keyboard"))]
     let maybe_keyboard: Html = html!{};
 

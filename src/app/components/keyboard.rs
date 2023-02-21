@@ -39,6 +39,7 @@ const KEYBOARD_LAYOUT: [[KbSlot; 10]; 4] = [
 
 #[derive(Properties, PartialEq)]
 pub struct KeyboardProps {
+    pub visible: bool,
     pub on_input: Callback<String>,
 }
 
@@ -92,12 +93,14 @@ pub fn keyboard(props: &KeyboardProps) -> Html {
         })
     };
 
+    let maybe_hidden = if props.visible { None } else { Some("hidden") };
+
     html! {
-        <div class="element">
+        <div class="keyboard">
         {
             KEYBOARD_LAYOUT.iter().map(|row| {
                 html! {
-                    <div class="row">
+                    <div class={classes!("row", maybe_hidden)}>
                     {
                         row.iter().map(|slot| {
                             html!{
@@ -175,5 +178,40 @@ pub fn keyboard_key(props: &KeyboardKeyProps) -> Html {
         },
         KbSlot::Backspace => html! {<div class="keyb backspace" onclick={on_kb_click}>{"⌫"}</div>},
         KbSlot::Alt => html! {<div class="keyb alt" onclick={on_kb_click}>{"Fn"}</div>},
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct KeyboardDrawerProps {
+    pub on_click: Callback<bool>,
+}
+
+#[function_component(KeyboardDrawer)]
+pub fn keyboard_drawer(props: &KeyboardDrawerProps) -> Html {
+    let open = use_state(|| true);
+
+    let on_click = {
+        let open = open.clone();
+        let on_click = props.on_click.clone();
+        Callback::from(move |_| {
+            let new_state = !*open;
+            on_click.emit(new_state);
+            open.set(new_state);
+        })
+    };
+
+    let visible_state = if *open { Some("open") } else { Some("closed") };
+
+    html! {
+        <div class="element keyb-gate" onclick={on_click}>
+            <div class={classes!("keyb-gate-msg", visible_state)}>
+            if *open {
+                {"Hide keyboard"}
+            } else {
+                {"Show keyboard"}
+            }
+            </div>
+            <hr />
+        </div>
     }
 }

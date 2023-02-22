@@ -446,7 +446,7 @@ pub fn app() -> Html {
         } else {
             if db_initialized {
                 <div
-                    class={classes!( "element", if *mp_wrong { None } else { Some("hidden") })}
+                    class={classes!( "element", if *mp_wrong { None } else { Some("invisible") })}
                 >
                         {"Wrong master password"}
                 </div>
@@ -473,7 +473,7 @@ pub fn app() -> Html {
             }
             <div class="element">
                 <button type="button" onclick={login} disabled={!mp_sufficient_len || !mps_match}>
-                    {"Enter"}
+                    {"Unlock"}
                 </button>
             </div>
         }

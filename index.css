@@ -111,17 +111,17 @@ input[type="radio"]:checked {
 label {
   margin: 0 auto;
 }
-.row {
-  display: flex;
-  justify-content: center;
- }
 .hidden {
-  visibility: hidden;
+  display: none;
 }
 .keyboard {
   margin: 0.5em 0;
   max-width: 600px;
 }
+.kbrow {
+  display: flex;
+  justify-content: center;
+ }
 .keyb {
   position: relative;
   display: flex;
@@ -183,28 +183,28 @@ label {
 }
 .space {
 }
-.keyb-gate {
+.collapsible {
   display: flex;
   width: 100%;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.keyb-gate:active {
+.collapsible:active {
   background-color: black;
 }
-.keyb-gate-msg {
+.collapsible-msg {
   padding-right: 7px;
 }
-.keyb-gate-msg.open::before {
+.collapsible-msg.open::before {
   content: "▼";
   padding-right: 5px;
 }
-.keyb-gate-msg.closed::before {
+.collapsible-msg.closed::before {
   content: "▶";
   padding-right: 5px;
 }
-.keyb-gate hr {
+.collapsible hr {
   flex: 1;
   background-color: gray;
   border-color: rgba(0, 0, 0, 0);

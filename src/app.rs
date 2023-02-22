@@ -10,8 +10,9 @@ mod components;
 use components::alias_input::AliasInput;
 use components::secret_input::SecretInput;
 use components::triswitch::Triswitch;
+use components::collapsible::Collapsible;
 #[cfg(feature = "keyboard")]
-use components::keyboard::{Keyboard, KeyboardDrawer};
+use components::keyboard::Keyboard;
 
 #[wasm_bindgen]
 extern "C" {
@@ -69,6 +70,8 @@ pub fn app() -> Html {
     let password_ref = use_node_ref();
     // NodeRef of currently focused input
     let input_ref = use_state(|| NodeRef::default());
+    // Visibility of options
+    let options_visible = use_state(|| false);
     // Visibility of keyboard
     #[cfg(feature = "keyboard")]
     let kb_visible = use_state(|| true);
@@ -173,6 +176,13 @@ pub fn app() -> Html {
         let secret = secret.clone();
         Callback::from(move |input: String| {
             secret.set(input.clone());
+        })
+    };
+
+    let on_options_collapsible_click = {
+        let options_visible = options_visible.clone();
+        Callback::from(move |visible: bool| {
+            options_visible.set(visible);
         })
     };
 
@@ -317,7 +327,7 @@ pub fn app() -> Html {
     // Keyboard stuff
 
     #[cfg(feature = "keyboard")]
-    let on_kb_drawer_click = {
+    let on_kb_collapsible_click = {
         let kb_visible = kb_visible.clone();
         Callback::from(move |visible: bool| {
             kb_visible.set(visible);
@@ -369,7 +379,7 @@ pub fn app() -> Html {
     #[cfg(feature = "keyboard")]
     let maybe_keyboard: Html = html!{
         <>
-            <KeyboardDrawer on_click={on_kb_drawer_click} />
+            <Collapsible name="keyboard" on_click={on_kb_collapsible_click} />
             <Keyboard visible={*kb_visible} on_input={on_kb_input} />
         </>
     };
@@ -382,9 +392,6 @@ pub fn app() -> Html {
     html! {
         <main class="container">
         if *initialized {
-            <div class="element password" ref={password_ref} tabindex="-1">
-                <strong>{ &*password_msg }</strong>
-            </div>
             <AliasInput
                 clear={!password_msg.is_empty()}
                 {known_aliases}
@@ -399,15 +406,26 @@ pub fn app() -> Html {
                 on_input={on_secret_input.clone()}
                 on_focus={on_input_focus.clone()}
             />
+            if password_msg.is_empty() {
             <div class="element">
                 <button type="button" onclick={process} disabled={!can_process}>
                     { if *alias_handle != AliasHandle::Remove {"Get password"}
                         else {"Remove alias"} }
                 </button>
             </div>
+            } else {
+            <div class="element password" ref={password_ref} tabindex="-1">
+                <strong>{ &*password_msg }</strong>
+            </div>
+            }
+            <Collapsible name="options"
+                start_collapsed=true
+                on_click={on_options_collapsible_click}
+            />
             <Triswitch
                 checked={match_alias_handle}
                 disabled={vec![false, *known_alias, !*known_alias]}
+                visible={*options_visible}
                 name="alias_handle"
                 title="How to handle alias"
                 labels={vec![
@@ -419,6 +437,7 @@ pub fn app() -> Html {
             <Triswitch
                 checked={match_charset}
                 disabled={vec![*known_alias, *known_alias, *known_alias]}
+                visible={*options_visible}
                 name="charset"
                 title="Character set to use"
                 labels={vec![

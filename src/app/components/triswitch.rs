@@ -5,6 +5,7 @@ use yew::prelude::*;
 pub struct TriswitchProps {
     pub checked: Option<u8>,
     pub disabled: Vec<bool>,
+    pub visible: bool,
     pub name: String,
     pub title: String,
     pub labels: Vec<String>,
@@ -57,9 +58,10 @@ pub fn triswitch(props: &TriswitchProps) -> Html {
 
     let labels = props.labels.clone();
     let disabled = props.disabled.clone();
+    let maybe_hidden = if props.visible { None } else { Some("hidden") };
 
     html! {
-        <fieldset class="full-width">
+        <fieldset class={classes!("full-width", maybe_hidden)}>
             <legend>{props.title.clone()}</legend>
             <div class="switch-wrapper" ref={triswitch_ref}>
             {

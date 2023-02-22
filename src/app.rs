@@ -406,18 +406,15 @@ pub fn app() -> Html {
                 on_input={on_secret_input.clone()}
                 on_focus={on_input_focus.clone()}
             />
-            if password_msg.is_empty() {
             <div class="element">
                 <button type="button" onclick={process} disabled={!can_process}>
                     { if *alias_handle != AliasHandle::Remove {"Get password"}
                         else {"Remove alias"} }
                 </button>
             </div>
-            } else {
             <div class="element password" ref={password_ref} tabindex="-1">
                 <strong>{ &*password_msg }</strong>
             </div>
-            }
             <Collapsible name="options"
                 start_collapsed=true
                 on_click={on_options_collapsible_click}

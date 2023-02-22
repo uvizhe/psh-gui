@@ -25,10 +25,11 @@ button {
   width: 13.5em;
   height: 2.5em;
   box-sizing: content-box;
-  margin: 1.5em 0;
+  margin: 1em 0;
 }
 .password {
   height: 2em;
+  margin: 1em 0;
 }
 .password::before {
   content: "";
@@ -63,9 +64,12 @@ fieldset {
   color: gray;
   border: 1px solid gray;
   margin: 0.5em 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 legend {
   padding: 0 6px;
+  margin-left: 6px;
 }
 .switch-wrapper {
   display: flex;
@@ -78,6 +82,12 @@ legend {
   align-items: center;
   width: 30%;
   font-size: 0.9em;
+  cursor: pointer;
+  user-select: none;
+}
+.switch label {
+  margin: 0 auto;
+  pointer-events: none;
 }
 input[type="text"] {
   width: 14em;
@@ -97,6 +107,7 @@ input[type="radio"] {
   border: 3px solid gray;
   border-radius: 50%;
   padding: 4px;
+  pointer-events: none;
 }
 input[type="radio"]:enabled {
   background-color: gray;
@@ -107,9 +118,6 @@ input[type="radio"]:disabled {
 }
 input[type="radio"]:checked {
   background-color: black;
-}
-label {
-  margin: 0 auto;
 }
 .hidden {
   display: none;

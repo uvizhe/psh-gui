@@ -3,7 +3,7 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct TriswitchProps {
-    pub checked: Option<u8>,
+    pub checked: Option<usize>,
     pub disabled: Vec<bool>,
     pub visible: bool,
     pub name: String,
@@ -14,43 +14,29 @@ pub struct TriswitchProps {
 
 #[function_component(Triswitch)]
 pub fn triswitch(props: &TriswitchProps) -> Html {
-    let triswitch_ref = use_node_ref();
+    let triswitch_refs = [use_node_ref(), use_node_ref(), use_node_ref()];
 
     {
         let checked = props.checked.unwrap_or(0);
-        let triswitch_ref = triswitch_ref.clone();
+        let triswitch_refs = triswitch_refs.clone();
         use_effect_with_deps(
             move |_| {
-                let option;
-                if checked < 2 {
-                    let first_option_wrapper = triswitch_ref.get().unwrap()
-                        .first_child().expect("div wrapped for input doesn't exist");
-                    if checked < 1 {
-                        option = first_option_wrapper
-                            .first_child().expect("input doesn't exist")
-                            .dyn_into::<web_sys::HtmlInputElement>().unwrap();
-                    } else {
-                        option = first_option_wrapper
-                            .next_sibling().expect("div wrapped for input doesn't exist")
-                            .first_child().expect("input doesn't exist")
-                            .dyn_into::<web_sys::HtmlInputElement>().unwrap();
-                    }
-                } else {
-                    option = triswitch_ref.get().unwrap()
-                        .last_child().expect("div wrapped for input doesn't exist")
-                        .first_child().expect("input doesn't exist")
-                        .dyn_into::<web_sys::HtmlInputElement>().unwrap();
-                }
+                let option_div = triswitch_refs[checked].clone();
+                let option = option_div.get().unwrap()
+                    .first_child().expect("input doesn't exist")
+                    .dyn_into::<web_sys::HtmlInputElement>().unwrap();
                 option.set_checked(true);
             },
             checked,
         );
     }
 
-    let on_switch = {
+    let on_click = {
         let on_switch = props.on_switch.clone();
-        Callback::from(move |e: Event| {
-            let radio = e.target_dyn_into::<web_sys::HtmlInputElement>().unwrap();
+        Callback::from(move |e: MouseEvent| {
+            let wrapper = e.target_dyn_into::<web_sys::HtmlElement>().unwrap();
+            let radio = wrapper.first_child().unwrap()
+                .dyn_into::<web_sys::HtmlInputElement>().unwrap();
             let value = radio.value();
             on_switch.emit(value);
         })
@@ -63,16 +49,18 @@ pub fn triswitch(props: &TriswitchProps) -> Html {
     html! {
         <fieldset class={classes!("full-width", maybe_hidden)}>
             <legend>{props.title.clone()}</legend>
-            <div class="switch-wrapper" ref={triswitch_ref}>
+            <div class="switch-wrapper">
             {
                 for (0..3).map(|i| {
                     html! {
-                        <div class="switch">
+                        <div class="switch"
+                            ref={triswitch_refs[i].clone()}
+                            onclick={on_click.clone()}
+                        >
                             <input type="radio"
                                 id={i.to_string()}
                                 name={props.name.clone()}
                                 value={i.to_string()}
-                                onchange={on_switch.clone()}
                                 disabled={disabled[i]}
                             />
                             <label for={i.to_string()}>{&labels[i]}</label>

@@ -115,8 +115,18 @@ pub fn app() -> Html {
 
     let on_input_focus: Callback<NodeRef> = {
         let input_ref = input_ref.clone();
-        Callback::from(move |node_ref: NodeRef| {
-            input_ref.set(node_ref);
+        Callback::from(move |new_input_ref: NodeRef| {
+            // Remove "focused" class from previously focused input
+            if input_ref.get().is_some() {
+                let input = input_ref.cast::<web_sys::HtmlElement>().unwrap();
+                input.set_class_name("");
+            }
+
+            // Add "focused" class to newly focused input
+            let input = new_input_ref.cast::<web_sys::HtmlElement>().unwrap();
+            input.set_class_name("focused");
+
+            input_ref.set(new_input_ref);
         })
     };
 
@@ -345,8 +355,6 @@ pub fn app() -> Html {
         Callback::from(move |value: String| {
             if input_ref.get().is_some() {
                 let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
-                // Set focus back to input after click on the keyboard
-                input.focus().unwrap();
 
                 // Fill input with new value
                 let new_value =
@@ -386,6 +394,10 @@ pub fn app() -> Html {
     #[cfg(not(feature = "keyboard"))]
     let maybe_keyboard: Html = html!{};
 
+    #[cfg(feature = "keyboard")]
+    let keyboard_use = if *kb_visible { true } else { false };
+    #[cfg(not(feature = "keyboard"))]
+    let keyboard_use = false;
 
     let known_aliases = (*known_aliases).clone();
 
@@ -395,6 +407,7 @@ pub fn app() -> Html {
             <AliasInput
                 clear={!password_msg.is_empty()}
                 {known_aliases}
+                keyboard={keyboard_use}
                 on_input={on_alias_input.clone()}
                 on_focus={on_input_focus.clone()}
             />
@@ -403,6 +416,7 @@ pub fn app() -> Html {
                 disabled={!*use_secret}
                 id="secret-input"
                 hint="Enter secret..."
+                keyboard={keyboard_use}
                 on_input={on_secret_input.clone()}
                 on_focus={on_input_focus.clone()}
             />
@@ -460,6 +474,7 @@ pub fn app() -> Html {
                 focus=true
                 id="mp-input"
                 hint="Enter master password..."
+                keyboard={keyboard_use}
                 on_input={on_password_input.clone()}
                 on_focus={on_input_focus.clone()}
             />
@@ -467,6 +482,7 @@ pub fn app() -> Html {
                 <SecretInput
                     id="mp2-input"
                     hint="Repeat master password..."
+                    keyboard={keyboard_use}
                     on_input={on_password2_input.clone()}
                     on_focus={on_input_focus.clone()}
                 />

@@ -93,10 +93,17 @@ pub fn keyboard(props: &KeyboardProps) -> Html {
         })
     };
 
+    let on_kb_click = {
+        // Prevent stealing focus from input
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+        })
+    };
+
     let maybe_hidden = if props.visible { None } else { Some("hidden") };
 
     html! {
-        <div class={classes!("keyboard", maybe_hidden)}>
+        <div class={classes!("keyboard", maybe_hidden)} onmousedown={on_kb_click}>
         {
             KEYBOARD_LAYOUT.iter().map(|row| {
                 html! {
@@ -134,14 +141,17 @@ pub fn keyboard_key(props: &KeyboardKeyProps) -> Html {
     let on_kb_click = {
         let kbkey = props.kbkey.clone();
         let on_click = props.on_click.clone();
-        Callback::from(move |_| {
+        Callback::from(move |e: MouseEvent| {
+            // Prevent stealing focus from input
+            e.prevent_default();
+
             on_click.emit(kbkey);
         })
     };
 
     match props.kbkey {
         KbSlot::Pair(a, b) => html! {
-            <div class="keyb" onclick={on_kb_click}>
+            <div class="keyb" onmousedown={on_kb_click}>
                 <div
                     class={classes!(
                         if props.upper { Some("keyb-upper") } else { None },
@@ -161,7 +171,7 @@ pub fn keyboard_key(props: &KeyboardKeyProps) -> Html {
             </div>
         },
         KbSlot::Sole(a) => html! {
-            <div class="keyb" onclick={on_kb_click}>
+            <div class="keyb" onmousedown={on_kb_click}>
                 <div
                     class={classes!(
                         "keyb-prim",
@@ -173,10 +183,10 @@ pub fn keyboard_key(props: &KeyboardKeyProps) -> Html {
                 </div>
             </div>
         },
-        KbSlot::Space => html! {<div class="keyb space" onclick={on_kb_click}>{"⎵"}</div>},
-        KbSlot::Shift => html! {<div class="keyb shift" onclick={on_kb_click}></div>
+        KbSlot::Space => html! {<div class="keyb space" onmousedown={on_kb_click}>{"⎵"}</div>},
+        KbSlot::Shift => html! {<div class="keyb shift" onmousedown={on_kb_click}></div>
         },
-        KbSlot::Backspace => html! {<div class="keyb backspace" onclick={on_kb_click}>{"⌫"}</div>},
-        KbSlot::Alt => html! {<div class="keyb alt" onclick={on_kb_click}>{"Fn"}</div>},
+        KbSlot::Backspace => html! {<div class="keyb backspace" onmousedown={on_kb_click}>{"⌫"}</div>},
+        KbSlot::Alt => html! {<div class="keyb alt" onmousedown={on_kb_click}>{"Fn"}</div>},
     }
 }

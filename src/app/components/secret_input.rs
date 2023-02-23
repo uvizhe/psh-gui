@@ -10,6 +10,7 @@ pub struct SecretInputProps {
     pub focus: bool,
     pub id: String,
     pub hint: String,
+    pub keyboard: bool,
     pub on_input: Callback<String>,
     pub on_focus: Callback<NodeRef>,
 }
@@ -75,6 +76,7 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
                 ref={input_ref}
                 placeholder={props.hint.clone()}
                 disabled={props.disabled}
+                inputmode={if props.keyboard { "none" } else { "text" }}
             />
         </div>
     }

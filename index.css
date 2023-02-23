@@ -106,11 +106,13 @@ input[type="text"], input[type="password"] {
   height: 45px;
   background: black;
   color: whitesmoke;
-  outline: 1px solid lightgray;
   border: 0;
   border-radius: 2px;
   padding: 5px;
   outline-offset: 0;
+}
+input.focused {
+  outline: 1px solid lightgray;
 }
 input[type="password"]:disabled {
   filter: opacity(20%);

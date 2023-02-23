@@ -4,6 +4,7 @@ use yew::prelude::*;
 pub struct AliasInputProps {
     pub clear: bool,
     pub known_aliases: Vec<String>,
+    pub keyboard: bool,
     pub on_input: Callback<(String, bool)>,
     pub on_focus: Callback<NodeRef>,
 }
@@ -66,6 +67,7 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
                 list="aliases"
                 ref={input_ref}
                 placeholder="Enter alias..."
+                inputmode={if props.keyboard { "none" } else { "text" }}
             />
             <datalist id="aliases">
                 {

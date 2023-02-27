@@ -16,7 +16,6 @@ crate-type = ["rlib", "cdylib"]
 [dependencies]
 once_cell = "1.17.0"
 wasm-bindgen = "0.2.83"
-wasm-bindgen-futures = "0.4.34"
 web-sys = "0.3.59"
 yew = { version="0.20", features=["csr"] }
 

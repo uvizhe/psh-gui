@@ -1,7 +1,9 @@
+use std::time::Duration;
+
 use once_cell::sync::OnceCell;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
+use yew::platform::{spawn_local, time::sleep};
 
 use psh::{CharSet, Psh, PshStore, ZeroizingString};
 use psh_webdb::PshWebDb;
@@ -29,8 +31,7 @@ pub enum Msg {
     OnSecretInput(String),
     Login,
     Process,
-    WrongPassword,
-    Initialize(Psh),
+    Initialize(Option<Psh>),
     SetCharset(String),
     SetAliasHandle(String),
     OnOptionsCollapsibleClick(bool),
@@ -52,6 +53,25 @@ fn collect_aliases(psh: &Psh) -> Vec<String> {
         .iter()
         .map(|x| x.to_string())
         .collect()
+}
+
+fn initialize_psh(master_password: String, cb: Callback<Option<Psh>>) {
+    spawn_local(async move {
+        // XXX: The process is very resource-intensive and freezes Yew completely so
+        // we give Yew 1 millisecond to update UI before it becomes unresponsive :(
+        sleep(Duration::from_millis(1)).await;
+
+        let res = Psh::new(
+            ZeroizingString::new(master_password),
+            PshWebDb::new(),
+        );
+        if let Ok(psh) = res {
+            cb.emit(Some(psh));
+        } else {
+            log(&format!("Failed to initialize Psh: {}", res.err().unwrap()));
+            cb.emit(None);
+        }
+    });
 }
 
 pub struct App {
@@ -217,30 +237,18 @@ impl Component for App {
             Msg::Login => {
                 self.unlocking = true;
                 let master_password = self.master_password.clone();
-                let scope = ctx.link().clone();
-                spawn_local(async move {
-                    let res = Psh::new(
-                        ZeroizingString::new(master_password),
-                        PshWebDb::new(),
-                    );
-                    if let Ok(psh_instance) = res {
-                        scope.send_message(Msg::Initialize(psh_instance));
-                    } else {
-                        log(&format!("Failed to initialize Psh: {}", res.err().unwrap()));
-                        scope.send_message(Msg::WrongPassword);
-                    }
-                });
+                let callback = ctx.link().callback(Msg::Initialize);
+                initialize_psh(master_password, callback);
             }
-            Msg::WrongPassword => {
-                self.mp_wrong = true;
+            Msg::Initialize(maybe_psh) => {
+                if let Some(psh) = maybe_psh {
+                    self.initialized = true;
+                    self.known_aliases = collect_aliases(&psh);
+                    self.psh.set(psh).ok();
+                } else {
+                    self.mp_wrong = true;
+                }
                 self.unlocking = false;
-                self.master_password.clear();
-            }
-            Msg::Initialize(psh) => {
-                self.initialized = true;
-                self.unlocking = false;
-                self.known_aliases = collect_aliases(&psh);
-                self.psh.set(psh).ok();
                 self.master_password.clear();
             }
             Msg::Process => {
@@ -450,7 +458,7 @@ impl Component for App {
                     on_switch={ctx.link().callback(Msg::SetCharset)}
                 />
             } else if self.unlocking {
-                <div class="spinner">{"Unlocking..."}</div>
+                <div class="element">{"Unlocking..."}</div>
             } else {
                 if db_initialized {
                     <div

@@ -36,11 +36,15 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
         let clear = props.clear.clone();
         let clear2 = props.clear.clone();
         let input_ref = input_ref.clone();
+        let focus = props.focus.clone();
         use_effect_with_deps(
             move |_| {
                 if clear {
                     let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
                     input.set_value("");
+                    if focus {
+                        input.focus().unwrap();
+                    }
                 }
             },
             clear2,

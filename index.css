@@ -236,3 +236,38 @@ input[type="radio"]:checked {
   top: 4px;
   height: 0;
 }
+.overlay {
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 80%);
+  margin-top: -1em;
+}
+.spinner {
+  display: inline-block;
+}
+.spinner:after {
+  content: " ";
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  border: 6px solid whitesmoke;
+  border-color: whitesmoke transparent whitesmoke transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

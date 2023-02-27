@@ -58,8 +58,8 @@ fn collect_aliases(psh: &Psh) -> Vec<String> {
 fn initialize_psh(master_password: String, cb: Callback<Option<Psh>>) {
     spawn_local(async move {
         // XXX: The process is very resource-intensive and freezes Yew completely so
-        // we give Yew 1 millisecond to update UI before it becomes unresponsive :(
-        sleep(Duration::from_millis(1)).await;
+        // we give Yew 10 milliseconds to update UI before it becomes unresponsive :(
+        sleep(Duration::from_millis(10)).await;
 
         let res = Psh::new(
             ZeroizingString::new(master_password),
@@ -457,10 +457,14 @@ impl Component for App {
                         "Reduced".to_string()]}
                     on_switch={ctx.link().callback(Msg::SetCharset)}
                 />
-            } else if self.unlocking {
-                <div class="element">{"Unlocking..."}</div>
             } else {
                 if db_initialized {
+                    if self.unlocking {
+                        <div class="overlay">
+                            <div class="spinner"/>
+                            <div>{"Unlocking..."}</div>
+                        </div>
+                    }
                     <div
                         class={classes!(
                             "element",
@@ -470,6 +474,12 @@ impl Component for App {
                             {"Wrong master password"}
                     </div>
                 } else {
+                    if self.unlocking {
+                        <div class="overlay">
+                            <div class="spinner"/>
+                            <div>{"Initializing..."}</div>
+                        </div>
+                    }
                     <div class="element">
                         {"Warning: if you forget your Master Password you won't be able to retrieve your passwords"}
                     </div>
@@ -497,7 +507,7 @@ impl Component for App {
                         onclick={ctx.link().callback(|_| Msg::Login)}
                         disabled={!mp_sufficient_len || !mps_match}
                     >
-                        {"Unlock"}
+                        if db_initialized { {"Unlock"} } else { {"Start using Psh"} }
                     </button>
                 </div>
             }

@@ -162,8 +162,9 @@ impl Component for App {
                 }
 
                 // Add "focused" class to newly focused input
-                let input = new_input_ref.cast::<web_sys::HtmlElement>().unwrap();
-                input.set_class_name("focused");
+                if let Some(input) = new_input_ref.cast::<web_sys::HtmlElement>() {
+                    input.set_class_name("focused");
+                }
 
                 self.input_ref = new_input_ref;
             }
@@ -256,59 +257,60 @@ impl Component for App {
                 self.master_password.clear();
             }
             Msg::Process => {
+                // No input is in focus now
+                ctx.link().send_message(Msg::OnInputFocus(NodeRef::default()));
+
+                let psh = self.psh.get_mut().unwrap();
                 let alias_string = self.alias.trim().to_string();
-                if !alias_string.is_empty() {
-                    let psh = self.psh.get_mut().unwrap();
-                    let secret_string =
-                        if self.secret.to_string().is_empty() || !self.use_secret {
-                            None
-                        } else {
-                            Some(ZeroizingString::new(self.secret.to_string()))
-                        };
-                    let needs_secret = secret_string.is_some();
-                    if self.alias_handle != AliasHandle::Remove {
-                        let pass = psh.derive_password(
+                let secret_string =
+                    if self.secret.to_string().is_empty() || !self.use_secret {
+                        None
+                    } else {
+                        Some(ZeroizingString::new(self.secret.to_string()))
+                    };
+                let needs_secret = secret_string.is_some();
+                if self.alias_handle != AliasHandle::Remove {
+                    let pass = psh.derive_password(
+                        &ZeroizingString::new(alias_string.clone()),
+                        secret_string,
+                        Some(self.charset),
+                    );
+                    self.password_msg = pass.to_string();
+                    if !self.known_aliases.contains(&alias_string)
+                        && self.alias_handle == AliasHandle::Store
+                    {
+                        let res = psh.append_alias_to_db(
                             &ZeroizingString::new(alias_string.clone()),
-                            secret_string,
+                            Some(needs_secret),
                             Some(self.charset),
                         );
-                        self.password_msg = pass.to_string();
-                        if !self.known_aliases.contains(&alias_string)
-                            && self.alias_handle == AliasHandle::Store
-                        {
-                            let res = psh.append_alias_to_db(
-                                &ZeroizingString::new(alias_string.clone()),
-                                Some(needs_secret),
-                                Some(self.charset),
-                            );
-                            if res.is_ok() {
-                                self.known_aliases = collect_aliases(psh);
-                            } else {
-                                log("Failed to save alias");
-                            }
-                        }
-                    } else {
-                        let res = psh.remove_alias_from_db(&ZeroizingString::new(alias_string.clone()));
                         if res.is_ok() {
-                            self.alias.clear();
-                            self.password_msg.clear();
                             self.known_aliases = collect_aliases(psh);
                         } else {
-                            log("Failed to remove alias");
+                            log("Failed to save alias");
                         }
                     }
-                    self.alias.clear();
-                    self.secret.clear();
-                    self.use_secret = true;
-                    self.known_alias = false;
-                    self.alias_handle = AliasHandle::Store;
-                    self.alias_handle_user_choice = AliasHandle::Store;
-                    self.charset = CharSet::Standard;
-                    self.charset_user_choice = CharSet::Standard;
-                    // Focus on Password element to move focus away from button
-                    let el = self.password_ref.cast::<web_sys::HtmlElement>().unwrap();
-                    el.focus().unwrap();
+                } else {
+                    let res = psh.remove_alias_from_db(&ZeroizingString::new(alias_string.clone()));
+                    if res.is_ok() {
+                        self.alias.clear();
+                        self.password_msg.clear();
+                        self.known_aliases = collect_aliases(psh);
+                    } else {
+                        log("Failed to remove alias");
+                    }
                 }
+                self.alias.clear();
+                self.secret.clear();
+                self.use_secret = true;
+                self.known_alias = false;
+                self.alias_handle = AliasHandle::Store;
+                self.alias_handle_user_choice = AliasHandle::Store;
+                self.charset = CharSet::Standard;
+                self.charset_user_choice = CharSet::Standard;
+                // Focus on Password element to move focus away from button
+                let el = self.password_ref.cast::<web_sys::HtmlElement>().unwrap();
+                el.focus().unwrap();
             }
             #[cfg(feature = "keyboard")]
             Msg::OnKbCollapsibleClick(visible) => {

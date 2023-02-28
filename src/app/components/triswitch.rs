@@ -34,9 +34,17 @@ pub fn triswitch(props: &TriswitchProps) -> Html {
     let on_click = {
         let on_switch = props.on_switch.clone();
         Callback::from(move |e: MouseEvent| {
-            let wrapper = e.target_dyn_into::<web_sys::HtmlElement>().unwrap();
-            let radio = wrapper.first_child().unwrap()
-                .dyn_into::<web_sys::HtmlInputElement>().unwrap();
+            let radio = {
+                // If a click was on wrapper element
+                if let Some(wrapper) = e.target_dyn_into::<web_sys::HtmlDivElement>() {
+                    wrapper.first_child().unwrap()
+                        .dyn_into::<web_sys::HtmlInputElement>().unwrap()
+                }
+                // If it was a keyboard navigation
+                else {
+                    e.target_dyn_into::<web_sys::HtmlInputElement>().unwrap()
+                }
+            };
             if !radio.disabled() {
                 let value = radio.value();
                 on_switch.emit(value);

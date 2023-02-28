@@ -41,6 +41,13 @@ pub enum Msg {
     OnKbCollapsibleClick(bool),
 }
 
+#[derive(PartialEq)]
+enum AppState {
+    New,
+    Unlocking,
+    Initialized,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum AliasHandle {
     Store,
@@ -75,12 +82,10 @@ fn initialize_psh(master_password: String, cb: Callback<Option<Psh>>) {
 }
 
 pub struct App {
+    // App state
+    state: AppState,
     // Psh instance
     psh: OnceCell<Psh>,
-    // If psh is initialized (user entered right password)
-    initialized: bool,
-    // If unlocking is in process
-    unlocking: bool,
     // Master password
     master_password: String,
     // Second master password value (from second input) on db initialization
@@ -124,9 +129,8 @@ impl Component for App {
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
+            state: AppState::New,
             psh: OnceCell::new(),
-            initialized: false,
-            unlocking: false,
             master_password: String::new(),
             master_password2: String::new(),
             mp_wrong: false,
@@ -235,20 +239,20 @@ impl Component for App {
                 }
             }
             Msg::Login => {
-                self.unlocking = true;
+                self.state = AppState::Unlocking;
                 let master_password = self.master_password.clone();
                 let callback = ctx.link().callback(Msg::Initialize);
                 initialize_psh(master_password, callback);
             }
             Msg::Initialize(maybe_psh) => {
                 if let Some(psh) = maybe_psh {
-                    self.initialized = true;
+                    self.state = AppState::Initialized;
                     self.known_aliases = collect_aliases(&psh);
                     self.psh.set(psh).ok();
                 } else {
+                    self.state = AppState::New;
                     self.mp_wrong = true;
                 }
-                self.unlocking = false;
                 self.master_password.clear();
             }
             Msg::Process => {
@@ -346,11 +350,11 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let db_initialized = self.initialized || PshWebDb::new().exists();
+        let db_exists = PshWebDb::new().exists();
 
         let mp_sufficient_len = self.master_password.len() >= 8;
 
-        let mps_match = db_initialized || self.master_password == self.master_password2;
+        let mps_match = db_exists || self.master_password == self.master_password2;
 
         let can_derive_password =  !self.alias.trim().is_empty()
             && ((self.use_secret && !self.secret.is_empty())
@@ -398,9 +402,62 @@ impl Component for App {
         #[cfg(not(feature = "keyboard"))]
         let keyboard_use = false;
 
-        html! {
-            <main class="container">
-            if self.initialized {
+        let spinner_overlay = html! {
+            <div class="overlay">
+                <div class="spinner"/>
+                <div>{ if db_exists {"Unlocking..."} else {"Initializing..."} }</div>
+            </div>
+        };
+
+        let maybe_warning = {
+            let class = if db_exists {
+                let maybe_invisible = if self.mp_wrong { None } else { Some("invisible") };
+                classes!("element", maybe_invisible)
+            } else {
+                classes!("element")
+            };
+            let message = if db_exists {
+                "Wrong master password"
+            } else {
+                "Warning: if you forget your Master Password you won't be able to retrieve your passwords"
+            };
+            html! { <div class={class}>{ message }</div> }
+        };
+
+        let entrance_view = html! {
+            <>
+                { maybe_warning }
+                <SecretInput
+                    clear={self.mp_wrong}
+                    focus=true
+                    id="mp-input"
+                    hint="Enter master password..."
+                    keyboard={keyboard_use}
+                    on_input={ctx.link().callback(Msg::OnPasswordInput)}
+                    on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                />
+                if !db_exists {
+                    <SecretInput
+                        id="mp2-input"
+                        hint="Repeat master password..."
+                        keyboard={keyboard_use}
+                        on_input={ctx.link().callback(Msg::OnPassword2Input)}
+                        on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                    />
+                }
+                <div class="element">
+                    <button type="button"
+                        onclick={ctx.link().callback(|_| Msg::Login)}
+                        disabled={!mp_sufficient_len || !mps_match}
+                    >
+                        { if db_exists { "Unlock" } else { "Start using Psh"} }
+                    </button>
+                </div>
+            </>
+        };
+
+        let main_view = html! {
+            <>
                 <AliasInput
                     clear={!self.password_msg.is_empty()}
                     known_aliases={self.known_aliases.clone()}
@@ -422,8 +479,10 @@ impl Component for App {
                         onclick={ctx.link().callback(|_| Msg::Process)}
                         disabled={!can_process}
                     >
-                        { if self.alias_handle != AliasHandle::Remove {"Get password"}
-                            else {"Remove alias"} }
+                        {
+                            if self.alias_handle != AliasHandle::Remove {"Get password"}
+                            else {"Remove alias"}
+                        }
                     </button>
                 </div>
                 <div class="element password" ref={self.password_ref.clone()} tabindex="-1">
@@ -457,61 +516,22 @@ impl Component for App {
                         "Reduced".to_string()]}
                     on_switch={ctx.link().callback(Msg::SetCharset)}
                 />
-            } else {
-                if db_initialized {
-                    if self.unlocking {
-                        <div class="overlay">
-                            <div class="spinner"/>
-                            <div>{"Unlocking..."}</div>
-                        </div>
-                    }
-                    <div
-                        class={classes!(
-                            "element",
-                            if self.mp_wrong { None } else { Some("invisible") }
-                        )}
-                    >
-                            {"Wrong master password"}
-                    </div>
-                } else {
-                    if self.unlocking {
-                        <div class="overlay">
-                            <div class="spinner"/>
-                            <div>{"Initializing..."}</div>
-                        </div>
-                    }
-                    <div class="element">
-                        {"Warning: if you forget your Master Password you won't be able to retrieve your passwords"}
-                    </div>
-                }
-                <SecretInput
-                    clear={self.mp_wrong}
-                    focus=true
-                    id="mp-input"
-                    hint="Enter master password..."
-                    keyboard={keyboard_use}
-                    on_input={ctx.link().callback(Msg::OnPasswordInput)}
-                    on_focus={ctx.link().callback(Msg::OnInputFocus)}
-                />
-                if !db_initialized {
-                    <SecretInput
-                        id="mp2-input"
-                        hint="Repeat master password..."
-                        keyboard={keyboard_use}
-                        on_input={ctx.link().callback(Msg::OnPassword2Input)}
-                        on_focus={ctx.link().callback(Msg::OnInputFocus)}
-                    />
-                }
-                <div class="element">
-                    <button type="button"
-                        onclick={ctx.link().callback(|_| Msg::Login)}
-                        disabled={!mp_sufficient_len || !mps_match}
-                    >
-                        if db_initialized { {"Unlock"} } else { {"Start using Psh"} }
-                    </button>
-                </div>
-            }
-                { maybe_keyboard }
+            </>
+        };
+
+        html! {
+            <main class="container">
+            { match self.state {
+                AppState::New => entrance_view,
+                AppState::Unlocking => html!{
+                    <>
+                        { spinner_overlay }
+                        { entrance_view }
+                    </>
+                },
+                AppState::Initialized => main_view,
+            }}
+            { maybe_keyboard }
             </main>
         }
     }

@@ -293,8 +293,6 @@ impl Component for App {
                 } else {
                     let res = psh.remove_alias_from_db(&ZeroizingString::new(alias_string.clone()));
                     if res.is_ok() {
-                        self.alias.clear();
-                        self.password_msg.clear();
                         self.known_aliases = collect_aliases(psh);
                     } else {
                         log("Failed to remove alias");
@@ -461,7 +459,7 @@ impl Component for App {
         let main_view = html! {
             <>
                 <AliasInput
-                    clear={!self.password_msg.is_empty()}
+                    clear={self.alias.is_empty()}
                     known_aliases={self.known_aliases.clone()}
                     keyboard={keyboard_use}
                     on_input={ctx.link().callback(Msg::OnAliasInput)}

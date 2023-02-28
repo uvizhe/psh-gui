@@ -466,7 +466,7 @@ impl Component for App {
                     on_focus={ctx.link().callback(Msg::OnInputFocus)}
                 />
                 <SecretInput
-                    clear={!self.password_msg.is_empty() || !self.use_secret}
+                    clear={self.secret.is_empty() || !self.use_secret}
                     disabled={!self.use_secret}
                     id="secret-input"
                     hint="Enter secret..."

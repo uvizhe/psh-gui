@@ -46,7 +46,6 @@ pub fn collapsible(props: &CollapsibleProps) -> Html {
                 { &format!("Show {}", props.name) }
             }
             </div>
-            <hr />
         </div>
     }
 }

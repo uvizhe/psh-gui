@@ -7,6 +7,7 @@ pub struct AliasInputProps {
     pub keyboard: bool,
     pub on_input: Callback<(String, bool)>,
     pub on_focus: Callback<NodeRef>,
+    pub on_enter: Callback<()>,
 }
 
 #[function_component(AliasInput)]
@@ -58,12 +59,22 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
         })
     };
 
+    let on_key_down = {
+        let on_enter = props.on_enter.clone();
+        Callback::from(move |e: KeyboardEvent| {
+            if e.key() == "Enter" {
+                on_enter.emit(());
+            }
+        })
+    };
+
     html! {
         <div class="element">
             <input type="text"
                 id="alias-input"
                 oninput={check_alias}
                 onfocus={on_focus}
+                onkeydown={on_key_down}
                 list="aliases"
                 ref={input_ref}
                 placeholder="Enter alias..."

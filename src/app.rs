@@ -85,6 +85,7 @@ pub enum Msg {
     OnPassword2Input(String),
     OnAliasInput((String, bool)),
     OnSecretInput(String),
+    OnEnterPressed,
     Login,
     Process,
     Initialize(Option<Psh>),
@@ -137,6 +138,25 @@ pub struct App {
     // Visibility of keyboard
     #[cfg(feature = "keyboard")]
     kb_visible: bool,
+}
+
+impl App {
+    fn mp_invalid(&self, db_exists: bool) -> bool {
+        self.master_password.len() < 8
+            || (!db_exists && self.master_password != self.master_password2)
+    }
+
+    fn can_process(&self) -> bool {
+        if self.alias_handle == AliasHandle::Remove {
+            self.known_alias
+        } else {
+            !self.alias.trim().is_empty()
+                && ((self.use_secret && !self.secret.is_empty())
+                    || !self.use_secret
+                    || !self.known_alias)
+        }
+    }
+
 }
 
 impl Component for App {
@@ -217,6 +237,29 @@ impl Component for App {
             }
             Msg::OnSecretInput(input) => {
                 self.secret = input;
+            }
+            Msg::OnEnterPressed => {
+                // TODO: move focus to the next sensible input if any
+                match self.state {
+                    AppState::New => {
+                        let db_exists = PshWebDb::new().exists();
+                        if !self.mp_invalid(db_exists) {
+                            ctx.link().send_message(Msg::Login);
+                        } else {
+                            // Do not update view
+                            return false;
+                        }
+                    }
+                    AppState::Initialized => {
+                        if self.can_process() {
+                            ctx.link().send_message(Msg::Process);
+                        } else {
+                            // Do not update view
+                            return false;
+                        }
+                    }
+                    AppState::Unlocking => unreachable!(),
+                }
             }
             Msg::OnOptionsCollapsibleClick(visible) => {
                 self.options_visible = visible;
@@ -401,9 +444,6 @@ impl Component for App {
         let entrance_view = {
             let db_exists = PshWebDb::new().exists();
 
-            let mp_invalid = self.master_password.len() < 8
-                || (!db_exists && self.master_password != self.master_password2);
-
             let maybe_warning = {
                 let class = if db_exists {
                     let maybe_invisible = if self.mp_wrong { None } else { Some("invisible") };
@@ -431,6 +471,7 @@ impl Component for App {
                         keyboard={keyboard_use}
                         on_input={ctx.link().callback(Msg::OnPasswordInput)}
                         on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                        on_enter={ctx.link().callback(|_| Msg::OnEnterPressed)}
                     />
                     if !db_exists {
                         <SecretInput
@@ -439,12 +480,13 @@ impl Component for App {
                             keyboard={keyboard_use}
                             on_input={ctx.link().callback(Msg::OnPassword2Input)}
                             on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                            on_enter={ctx.link().callback(|_| Msg::OnEnterPressed)}
                         />
                     }
                     <div class="element">
                         <button type="button"
                             onclick={ctx.link().callback(|_| Msg::Login)}
-                            disabled={mp_invalid}
+                            disabled={self.mp_invalid(db_exists)}
                         >
                             { if db_exists { "Unlock" } else { "Start using Psh"} }
                         </button>
@@ -454,15 +496,6 @@ impl Component for App {
         };
 
         let main_view = {
-            let can_derive_password = !self.alias.trim().is_empty()
-                && ((self.use_secret && !self.secret.is_empty())
-                    || !self.use_secret
-                    || !self.known_alias);
-
-            let can_process =
-                if self.alias_handle == AliasHandle::Remove { self.known_alias }
-                else { can_derive_password };
-
             html! {
                 <>
                     <AliasInput
@@ -471,6 +504,7 @@ impl Component for App {
                         keyboard={keyboard_use}
                         on_input={ctx.link().callback(Msg::OnAliasInput)}
                         on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                        on_enter={ctx.link().callback(|_| Msg::OnEnterPressed)}
                     />
                     <SecretInput
                         clear={self.secret.is_empty() || !self.use_secret}
@@ -480,11 +514,12 @@ impl Component for App {
                         keyboard={keyboard_use}
                         on_input={ctx.link().callback(Msg::OnSecretInput)}
                         on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                        on_enter={ctx.link().callback(|_| Msg::OnEnterPressed)}
                     />
                     <div class="element">
                         <button type="button"
                             onclick={ctx.link().callback(|_| Msg::Process)}
-                            disabled={!can_process}
+                            disabled={!self.can_process()}
                         >
                             {
                                 if self.alias_handle != AliasHandle::Remove {"Get password"}

@@ -13,6 +13,7 @@ pub struct SecretInputProps {
     pub keyboard: bool,
     pub on_input: Callback<String>,
     pub on_focus: Callback<NodeRef>,
+    pub on_enter: Callback<()>,
 }
 
 #[function_component(SecretInput)]
@@ -69,6 +70,15 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
         })
     };
 
+    let on_key_down = {
+        let on_enter = props.on_enter.clone();
+        Callback::from(move |e: KeyboardEvent| {
+            if e.key() == "Enter" {
+                on_enter.emit(());
+            }
+        })
+    };
+
     html! {
         <div class="element">
             <input type="password"
@@ -77,6 +87,7 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
                 key={props.id.clone()}
                 oninput={on_input}
                 onfocus={on_focus}
+                onkeydown={on_key_down}
                 ref={input_ref}
                 placeholder={props.hint.clone()}
                 disabled={props.disabled}

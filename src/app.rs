@@ -23,24 +23,6 @@ extern "C" {
     fn log(s: &str);
 }
 
-pub enum Msg {
-    OnInputFocus(NodeRef),
-    OnPasswordInput(String),
-    OnPassword2Input(String),
-    OnAliasInput((String, bool)),
-    OnSecretInput(String),
-    Login,
-    Process,
-    Initialize(Option<Psh>),
-    SetCharset(String),
-    SetAliasHandle(String),
-    OnOptionsCollapsibleClick(bool),
-    #[cfg(feature = "keyboard")]
-    OnKbInput(String),
-    #[cfg(feature = "keyboard")]
-    OnKbCollapsibleClick(bool),
-}
-
 #[derive(PartialEq)]
 enum AppState {
     New,
@@ -53,6 +35,22 @@ enum AliasHandle {
     Store,
     Ignore,
     Remove,
+}
+
+fn alias_handle_id(handle: AliasHandle) -> usize {
+    match handle {
+        AliasHandle::Store => 0,
+        AliasHandle::Ignore => 1,
+        AliasHandle::Remove => 2,
+    }
+}
+
+fn charset_id(charset: CharSet) -> usize {
+    match charset {
+        CharSet::Standard => 0,
+        CharSet::RequireAll => 1,
+        CharSet::Reduced => 2,
+    }
 }
 
 fn collect_aliases(psh: &Psh) -> Vec<String> {
@@ -79,6 +77,24 @@ fn initialize_psh(master_password: String, cb: Callback<Option<Psh>>) {
             cb.emit(None);
         }
     });
+}
+
+pub enum Msg {
+    OnInputFocus(NodeRef),
+    OnPasswordInput(String),
+    OnPassword2Input(String),
+    OnAliasInput((String, bool)),
+    OnSecretInput(String),
+    Login,
+    Process,
+    Initialize(Option<Psh>),
+    SetCharset(String),
+    SetAliasHandle(String),
+    OnOptionsCollapsibleClick(bool),
+    #[cfg(feature = "keyboard")]
+    OnKbInput(String),
+    #[cfg(feature = "keyboard")]
+    OnKbCollapsibleClick(bool),
 }
 
 pub struct App {
@@ -350,37 +366,6 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let db_exists = PshWebDb::new().exists();
-
-        let mp_sufficient_len = self.master_password.len() >= 8;
-
-        let mps_match = db_exists || self.master_password == self.master_password2;
-
-        let can_derive_password =  !self.alias.trim().is_empty()
-            && ((self.use_secret && !self.secret.is_empty())
-                || !self.use_secret
-                || !self.known_alias);
-
-        let can_process =
-            if self.alias_handle == AliasHandle::Remove { self.known_alias }
-            else { can_derive_password };
-
-        let match_alias_handle = {
-            match self.alias_handle {
-                AliasHandle::Store => 0,
-                AliasHandle::Ignore => 1,
-                AliasHandle::Remove => 2,
-            }
-        };
-
-        let match_charset = {
-            match self.charset {
-                CharSet::Standard => 0,
-                CharSet::RequireAll => 1,
-                CharSet::Reduced => 2,
-            }
-        };
-
         #[cfg(feature = "keyboard")]
         let maybe_keyboard: Html = html!{
             <>
@@ -402,121 +387,144 @@ impl Component for App {
         #[cfg(not(feature = "keyboard"))]
         let keyboard_use = false;
 
-        let spinner_overlay = html! {
-            <div class="overlay">
-                <div class="spinner"/>
-                <div>{ if db_exists {"Unlocking..."} else {"Initializing..."} }</div>
-            </div>
+        let spinner_overlay = {
+            let db_exists = PshWebDb::new().exists();
+
+            html! {
+                <div class="overlay">
+                    <div class="spinner"/>
+                    <div>{ if db_exists {"Unlocking..."} else {"Initializing..."} }</div>
+                </div>
+            }
         };
 
-        let maybe_warning = {
-            let class = if db_exists {
-                let maybe_invisible = if self.mp_wrong { None } else { Some("invisible") };
-                classes!("element", maybe_invisible)
-            } else {
-                classes!("element")
-            };
-            let message = if db_exists {
-                "Wrong master password"
-            } else {
-                "Warning: if you forget your Master Password you won't be able to retrieve your passwords"
-            };
-            html! { <div class={class}>{ message }</div> }
-        };
+        let entrance_view = {
+            let db_exists = PshWebDb::new().exists();
 
-        let entrance_view = html! {
-            <>
-                { maybe_warning }
-                <SecretInput
-                    clear={self.mp_wrong}
-                    focus=true
-                    id="mp-input"
-                    hint="Enter master password..."
-                    keyboard={keyboard_use}
-                    on_input={ctx.link().callback(Msg::OnPasswordInput)}
-                    on_focus={ctx.link().callback(Msg::OnInputFocus)}
-                />
-                if !db_exists {
+            let mp_invalid = self.master_password.len() < 8
+                || (!db_exists && self.master_password != self.master_password2);
+
+            let maybe_warning = {
+                let class = if db_exists {
+                    let maybe_invisible = if self.mp_wrong { None } else { Some("invisible") };
+                    classes!("element", maybe_invisible)
+                } else {
+                    classes!("element")
+                };
+                let message = if db_exists {
+                    "Wrong master password"
+                } else {
+                    "Warning: if you forget your Master Password
+                        you won't be able to retrieve your passwords"
+                };
+                html! { <div class={class}>{ message }</div> }
+            };
+
+            html! {
+                <>
+                    { maybe_warning }
                     <SecretInput
-                        id="mp2-input"
-                        hint="Repeat master password..."
+                        clear={self.mp_wrong}
+                        focus=true
+                        id="mp-input"
+                        hint="Enter master password..."
                         keyboard={keyboard_use}
-                        on_input={ctx.link().callback(Msg::OnPassword2Input)}
+                        on_input={ctx.link().callback(Msg::OnPasswordInput)}
                         on_focus={ctx.link().callback(Msg::OnInputFocus)}
                     />
-                }
-                <div class="element">
-                    <button type="button"
-                        onclick={ctx.link().callback(|_| Msg::Login)}
-                        disabled={!mp_sufficient_len || !mps_match}
-                    >
-                        { if db_exists { "Unlock" } else { "Start using Psh"} }
-                    </button>
-                </div>
-            </>
+                    if !db_exists {
+                        <SecretInput
+                            id="mp2-input"
+                            hint="Repeat master password..."
+                            keyboard={keyboard_use}
+                            on_input={ctx.link().callback(Msg::OnPassword2Input)}
+                            on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                        />
+                    }
+                    <div class="element">
+                        <button type="button"
+                            onclick={ctx.link().callback(|_| Msg::Login)}
+                            disabled={mp_invalid}
+                        >
+                            { if db_exists { "Unlock" } else { "Start using Psh"} }
+                        </button>
+                    </div>
+                </>
+            }
         };
 
-        let main_view = html! {
-            <>
-                <AliasInput
-                    clear={self.alias.is_empty()}
-                    known_aliases={self.known_aliases.clone()}
-                    keyboard={keyboard_use}
-                    on_input={ctx.link().callback(Msg::OnAliasInput)}
-                    on_focus={ctx.link().callback(Msg::OnInputFocus)}
-                />
-                <SecretInput
-                    clear={self.secret.is_empty() || !self.use_secret}
-                    disabled={!self.use_secret}
-                    id="secret-input"
-                    hint="Enter secret..."
-                    keyboard={keyboard_use}
-                    on_input={ctx.link().callback(Msg::OnSecretInput)}
-                    on_focus={ctx.link().callback(Msg::OnInputFocus)}
-                />
-                <div class="element">
-                    <button type="button"
-                        onclick={ctx.link().callback(|_| Msg::Process)}
-                        disabled={!can_process}
-                    >
-                        {
-                            if self.alias_handle != AliasHandle::Remove {"Get password"}
-                            else {"Remove alias"}
-                        }
-                    </button>
-                </div>
-                <div class="element password" ref={self.password_ref.clone()} tabindex="-1">
-                    <strong>{ &self.password_msg }</strong>
-                </div>
-                <Collapsible name="options"
-                    start_collapsed=true
-                    on_click={ctx.link().callback(Msg::OnOptionsCollapsibleClick)}
-                />
-                <Triswitch
-                    checked={match_alias_handle}
-                    disabled={vec![false, self.known_alias, !self.known_alias]}
-                    visible={self.options_visible}
-                    name="alias_handle"
-                    title="How to handle alias"
-                    labels={vec![
-                        "Store".to_string(),
-                        "Don't store".to_string(),
-                        "Remove".to_string()]}
-                    on_switch={ctx.link().callback(Msg::SetAliasHandle)}
-                />
-                <Triswitch
-                    checked={match_charset}
-                    disabled={vec![self.known_alias, self.known_alias, self.known_alias]}
-                    visible={self.options_visible}
-                    name="charset"
-                    title="Character set to use"
-                    labels={vec![
-                        "Standard".to_string(),
-                        "Require All".to_string(),
-                        "Reduced".to_string()]}
-                    on_switch={ctx.link().callback(Msg::SetCharset)}
-                />
-            </>
+        let main_view = {
+            let can_derive_password = !self.alias.trim().is_empty()
+                && ((self.use_secret && !self.secret.is_empty())
+                    || !self.use_secret
+                    || !self.known_alias);
+
+            let can_process =
+                if self.alias_handle == AliasHandle::Remove { self.known_alias }
+                else { can_derive_password };
+
+            html! {
+                <>
+                    <AliasInput
+                        clear={self.alias.is_empty()}
+                        known_aliases={self.known_aliases.clone()}
+                        keyboard={keyboard_use}
+                        on_input={ctx.link().callback(Msg::OnAliasInput)}
+                        on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                    />
+                    <SecretInput
+                        clear={self.secret.is_empty() || !self.use_secret}
+                        disabled={!self.use_secret}
+                        id="secret-input"
+                        hint="Enter secret..."
+                        keyboard={keyboard_use}
+                        on_input={ctx.link().callback(Msg::OnSecretInput)}
+                        on_focus={ctx.link().callback(Msg::OnInputFocus)}
+                    />
+                    <div class="element">
+                        <button type="button"
+                            onclick={ctx.link().callback(|_| Msg::Process)}
+                            disabled={!can_process}
+                        >
+                            {
+                                if self.alias_handle != AliasHandle::Remove {"Get password"}
+                                else {"Remove alias"}
+                            }
+                        </button>
+                    </div>
+                    <div class="element password" ref={self.password_ref.clone()} tabindex="-1">
+                        <strong>{ &self.password_msg }</strong>
+                    </div>
+                    <Collapsible name="options"
+                        start_collapsed=true
+                        on_click={ctx.link().callback(Msg::OnOptionsCollapsibleClick)}
+                    />
+                    <Triswitch
+                        checked={alias_handle_id(self.alias_handle)}
+                        disabled={vec![false, self.known_alias, !self.known_alias]}
+                        visible={self.options_visible}
+                        name="alias_handle"
+                        title="How to handle alias"
+                        labels={vec![
+                            "Store".to_string(),
+                            "Don't store".to_string(),
+                            "Remove".to_string()]}
+                        on_switch={ctx.link().callback(Msg::SetAliasHandle)}
+                    />
+                    <Triswitch
+                        checked={charset_id(self.charset)}
+                        disabled={vec![self.known_alias, self.known_alias, self.known_alias]}
+                        visible={self.options_visible}
+                        name="charset"
+                        title="Character set to use"
+                        labels={vec![
+                            "Standard".to_string(),
+                            "Require All".to_string(),
+                            "Reduced".to_string()]}
+                        on_switch={ctx.link().callback(Msg::SetCharset)}
+                    />
+                </>
+            }
         };
 
         html! {

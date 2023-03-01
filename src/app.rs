@@ -53,32 +53,6 @@ fn charset_id(charset: CharSet) -> usize {
     }
 }
 
-fn collect_aliases(psh: &Psh) -> Vec<String> {
-    psh.aliases()
-        .iter()
-        .map(|x| x.to_string())
-        .collect()
-}
-
-fn initialize_psh(master_password: String, cb: Callback<Option<Psh>>) {
-    spawn_local(async move {
-        // XXX: The process is very resource-intensive and freezes Yew completely so
-        // we give Yew 10 milliseconds to update UI before it becomes unresponsive :(
-        sleep(Duration::from_millis(10)).await;
-
-        let res = Psh::new(
-            ZeroizingString::new(master_password),
-            PshWebDb::new(),
-        );
-        if let Ok(psh) = res {
-            cb.emit(Some(psh));
-        } else {
-            log(&format!("Failed to initialize Psh: {}", res.err().unwrap()));
-            cb.emit(None);
-        }
-    });
-}
-
 pub enum Msg {
     OnInputFocus(NodeRef),
     OnPasswordInput(String),
@@ -141,12 +115,13 @@ pub struct App {
 }
 
 impl App {
-    fn mp_invalid(&self, db_exists: bool) -> bool {
-        self.master_password.len() < 8
-            || (!db_exists && self.master_password != self.master_password2)
+    fn mp_looks_valid(&self) -> bool {
+        self.master_password.len() >= 8
+            && if !PshWebDb::new().exists() { self.master_password == self.master_password2 }
+                    else { true }
     }
 
-    fn can_process(&self) -> bool {
+    fn can_process_alias(&self) -> bool {
         if self.alias_handle == AliasHandle::Remove {
             self.known_alias
         } else {
@@ -157,6 +132,33 @@ impl App {
         }
     }
 
+    fn collect_aliases(&self) -> Vec<String> {
+        let psh = self.psh.get().unwrap();
+        psh.aliases()
+            .iter()
+            .map(|x| x.to_string())
+            .collect()
+    }
+
+    fn initialize_psh(&self, cb: Callback<Option<Psh>>) {
+        let master_password = self.master_password.clone();
+        spawn_local(async move {
+            // XXX: The process is very resource-intensive and freezes Yew completely so
+            // we give Yew 10 milliseconds to update UI before it becomes unresponsive :(
+            sleep(Duration::from_millis(10)).await;
+
+            let res = Psh::new(
+                ZeroizingString::new(master_password),
+                PshWebDb::new(),
+            );
+            if let Ok(psh) = res {
+                cb.emit(Some(psh));
+            } else {
+                log(&format!("Failed to initialize Psh: {}", res.err().unwrap()));
+                cb.emit(None);
+            }
+        });
+    }
 }
 
 impl Component for App {
@@ -242,8 +244,7 @@ impl Component for App {
                 // TODO: move focus to the next sensible input if any
                 match self.state {
                     AppState::New => {
-                        let db_exists = PshWebDb::new().exists();
-                        if !self.mp_invalid(db_exists) {
+                        if self.mp_looks_valid() {
                             ctx.link().send_message(Msg::Login);
                         } else {
                             // Do not update view
@@ -251,7 +252,7 @@ impl Component for App {
                         }
                     }
                     AppState::Initialized => {
-                        if self.can_process() {
+                        if self.can_process_alias() {
                             ctx.link().send_message(Msg::Process);
                         } else {
                             // Do not update view
@@ -300,15 +301,14 @@ impl Component for App {
             }
             Msg::Login => {
                 self.state = AppState::Unlocking;
-                let master_password = self.master_password.clone();
                 let callback = ctx.link().callback(Msg::Initialize);
-                initialize_psh(master_password, callback);
+                self.initialize_psh(callback);
             }
             Msg::Initialize(maybe_psh) => {
                 if let Some(psh) = maybe_psh {
                     self.state = AppState::Initialized;
-                    self.known_aliases = collect_aliases(&psh);
                     self.psh.set(psh).ok();
+                    self.known_aliases = self.collect_aliases();
                 } else {
                     self.state = AppState::New;
                     self.mp_wrong = true;
@@ -344,7 +344,7 @@ impl Component for App {
                             Some(self.charset),
                         );
                         if res.is_ok() {
-                            self.known_aliases = collect_aliases(psh);
+                            self.known_aliases = self.collect_aliases();
                         } else {
                             log("Failed to save alias");
                         }
@@ -352,7 +352,7 @@ impl Component for App {
                 } else {
                     let res = psh.remove_alias_from_db(&ZeroizingString::new(alias_string.clone()));
                     if res.is_ok() {
-                        self.known_aliases = collect_aliases(psh);
+                        self.known_aliases = self.collect_aliases();
                     } else {
                         log("Failed to remove alias");
                     }
@@ -486,7 +486,7 @@ impl Component for App {
                     <div class="element">
                         <button type="button"
                             onclick={ctx.link().callback(|_| Msg::Login)}
-                            disabled={self.mp_invalid(db_exists)}
+                            disabled={!self.mp_looks_valid()}
                         >
                             { if db_exists { "Unlock" } else { "Start using Psh"} }
                         </button>
@@ -519,7 +519,7 @@ impl Component for App {
                     <div class="element">
                         <button type="button"
                             onclick={ctx.link().callback(|_| Msg::Process)}
-                            disabled={!self.can_process()}
+                            disabled={!self.can_process_alias()}
                         >
                             {
                                 if self.alias_handle != AliasHandle::Remove {"Get password"}

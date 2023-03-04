@@ -112,8 +112,8 @@ input[type="text"], input[type="password"] {
   padding: 5px;
   outline-offset: 0;
 }
-input.focused {
-  outline: 1px solid lightgray;
+input:focus {
+  outline: 2px solid lightgray;
 }
 input[type="password"]:disabled {
   filter: opacity(20%);

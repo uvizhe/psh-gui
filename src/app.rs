@@ -53,7 +53,15 @@ fn charset_id(charset: CharSet) -> usize {
     }
 }
 
+fn is_firefox() -> bool {
+    web_sys::window().unwrap()
+        .navigator()
+        .user_agent().unwrap()
+        .contains("Firefox")
+}
+
 pub enum Msg {
+    OnFocusOut(FocusEvent),
     OnInputFocus(NodeRef),
     OnPasswordInput(String),
     OnPassword2Input(String),
@@ -192,18 +200,21 @@ impl Component for App {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
+            Msg::OnFocusOut(e) => {
+                // Check where the focus goes. If on non-focusable element, then bring it back
+                if e.related_target().is_none() {
+                    let el = e.target_dyn_into::<web_sys::HtmlElement>().unwrap();
+                    if is_firefox() {
+                        spawn_local(async move {
+                            sleep(Duration::from_millis(10)).await;
+                            el.focus().unwrap();
+                        });
+                    } else {
+                        el.focus().unwrap();
+                    }
+                }
+            }
             Msg::OnInputFocus(new_input_ref) => {
-                // Remove "focused" class from previously focused input
-                if self.input_ref.get().is_some() {
-                    let input = self.input_ref.cast::<web_sys::HtmlElement>().unwrap();
-                    input.set_class_name("");
-                }
-
-                // Add "focused" class to newly focused input
-                if let Some(input) = new_input_ref.cast::<web_sys::HtmlElement>() {
-                    input.set_class_name("focused");
-                }
-
                 self.input_ref = new_input_ref;
             }
             Msg::OnPasswordInput(input) => {
@@ -563,7 +574,7 @@ impl Component for App {
         };
 
         html! {
-            <main class="container">
+            <main class="container" onfocusout={ctx.link().callback(Msg::OnFocusOut)}>
             { match self.state {
                 AppState::New => entrance_view,
                 AppState::Unlocking => html!{

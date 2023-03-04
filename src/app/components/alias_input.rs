@@ -14,7 +14,9 @@ pub struct AliasInputProps {
 
 #[function_component(AliasInput)]
 pub fn alias_input(props: &AliasInputProps) -> Html {
-    let show_dropdown = use_state(|| false);
+    let show_dropdown = use_state_eq(|| false);
+    let dropdown_closed_on_select = use_state(|| false);
+    let dropdown_selected_idx = use_state(|| None::<usize>);
     let alias_matches = use_memo(
         |(aliases, string)| {
             let matches: Vec<String> = aliases.iter()
@@ -25,9 +27,30 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
         },
         (props.known_aliases.clone(), props.text.clone())
     );
-    let dropdown_selected_idx = use_state(|| None::<usize>);
+    let dropdown_last_idx = use_memo(
+        |matches| {
+            if matches.len() > 0 { Some(matches.len() - 1) }
+            else { None }
+        },
+        alias_matches.clone()
+    );
     let input_ref = use_node_ref();
 
+    { // Show dropdown if input value changed
+        let text = props.text.clone();
+        let show_dropdown = show_dropdown.clone();
+        let dropdown_closed_on_select = dropdown_closed_on_select.clone();
+        use_effect_with_deps(
+            move |_| {
+                if !*dropdown_closed_on_select {
+                    show_dropdown.set(true);
+                } else {
+                    dropdown_closed_on_select.set(false);
+                }
+            },
+            text,
+        );
+    }
     {
         let show_dropdown = show_dropdown.clone();
         let input_ref = input_ref.clone();
@@ -79,26 +102,25 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
 
     let on_key_down = {
         let show_dropdown = show_dropdown.clone();
+        let dropdown_closed_on_select = dropdown_closed_on_select.clone();
         let on_enter = props.on_enter.clone();
         let dropdown_selected_idx = dropdown_selected_idx.clone();
         let alias_matches = alias_matches.clone();
+        let dropdown_last_idx = dropdown_last_idx.clone();
         let check_alias = check_alias.clone();
         Callback::from(move |e: KeyboardEvent| {
             if e.key() == "Enter" {
                 if let Some(selected_idx) = *dropdown_selected_idx {
                     let alias = alias_matches.get(selected_idx).unwrap();
                     show_dropdown.set(false);
+                    dropdown_closed_on_select.set(true);
                     dropdown_selected_idx.set(None);
                     check_alias.emit(alias.clone());
                 } else {
                     on_enter.emit(());
                 }
             } else if e.key() == "ArrowDown" {
-                // XXX: This could use_memo
-                let last_dropdown_idx =
-                    if alias_matches.len() > 0 { Some(alias_matches.len() - 1) }
-                    else { None };
-                if let Some(last_idx) = last_dropdown_idx {
+                if let Some(last_idx) = *dropdown_last_idx {
                     if let Some(prev_selected) = *dropdown_selected_idx {
                         if prev_selected < last_idx {
                             dropdown_selected_idx.set(Some(prev_selected + 1));
@@ -111,10 +133,7 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
                     show_dropdown.set(true);
                 }
             } else if e.key() == "ArrowUp" {
-                let last_dropdown_idx =
-                    if alias_matches.len() > 0 { Some(alias_matches.len() - 1) }
-                    else { None };
-                if let Some(last_idx) = last_dropdown_idx {
+                if let Some(last_idx) = *dropdown_last_idx {
                     if let Some(prev_selected) = *dropdown_selected_idx {
                         if prev_selected > 0 {
                             dropdown_selected_idx.set(Some(prev_selected - 1));
@@ -139,10 +158,12 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
 
     let on_match_click = {
         let show_dropdown = show_dropdown.clone();
+        let dropdown_closed_on_select = dropdown_closed_on_select.clone();
         let dropdown_selected_idx = dropdown_selected_idx.clone();
         let check_alias = check_alias.clone();
         Callback::from(move |alias: String| {
             show_dropdown.set(false);
+            dropdown_closed_on_select.set(true);
             dropdown_selected_idx.set(None);
             check_alias.emit(alias.clone());
         })

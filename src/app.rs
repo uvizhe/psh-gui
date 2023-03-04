@@ -499,7 +499,7 @@ impl Component for App {
             html! {
                 <>
                     <AliasInput
-                        clear={self.alias.is_empty()}
+                        text={self.alias.clone()}
                         known_aliases={self.known_aliases.clone()}
                         keyboard={keyboard_use}
                         on_input={ctx.link().callback(Msg::OnAliasInput)}

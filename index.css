@@ -17,6 +17,7 @@ body {
   max-width: 1000px;
  }
 .element {
+  position: relative;
   margin: 0.5em 0;
   max-width: 600px;
 }
@@ -141,6 +142,19 @@ input[type="radio"]:checked {
 }
 .invisible {
   visibility: hidden;
+}
+.dropdown {
+  position: absolute;
+  z-index: 1;
+  top: 45px;
+  width: 250px;
+  background-color: black;
+}
+.dropdown .variant {
+  height: 20px;
+}
+.dropdown .variant.selected {
+  background-color: darkblue;
 }
 .keyboard {
   margin: 0.5em 0;

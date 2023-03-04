@@ -46,6 +46,7 @@ pub fn triswitch(props: &TriswitchProps) -> Html {
                 }
             };
             if !radio.disabled() {
+                radio.focus().unwrap();
                 let value = radio.value();
                 on_switch.emit(value);
             }

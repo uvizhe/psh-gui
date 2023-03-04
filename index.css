@@ -125,7 +125,6 @@ input[type="radio"] {
   border: 3px solid lightgray;
   border-radius: 50%;
   padding: 4px;
-  pointer-events: none;
 }
 input[type="radio"]:enabled {
   background-color: lightgray;

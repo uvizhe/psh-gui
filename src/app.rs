@@ -215,6 +215,12 @@ impl Component for App {
                 }
             }
             Msg::OnInputFocus(new_input_ref) => {
+                // Since we move focus after processing (and call this handler),
+                // we can check `input_ref` and clear last derived password when
+                // input gets focus
+                if self.input_ref.get().is_none() {
+                    self.password_msg.clear()
+                }
                 self.input_ref = new_input_ref;
             }
             Msg::OnPasswordInput(input) => {
@@ -245,8 +251,6 @@ impl Component for App {
                     self.use_secret = true;
                     self.charset = self.charset_user_choice;
                 }
-                // Clear last derived password on new alias input
-                self.password_msg.clear()
             }
             Msg::OnSecretInput(input) => {
                 self.secret = input;

@@ -146,7 +146,11 @@ input[type="radio"]:checked {
   position: absolute;
   z-index: 1;
   top: 45px;
+  left: -1px;
   width: 250px;
+  box-sizing: content-box;
+  border: 1px solid whitesmoke;
+  border-top: none;
   background-color: black;
 }
 .dropdown .variant {

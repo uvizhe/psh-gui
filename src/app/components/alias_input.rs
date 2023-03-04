@@ -175,6 +175,19 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
         })
     };
 
+    let on_match_hover = {
+        let dropdown_selected_idx = dropdown_selected_idx.clone();
+        let alias_matches = alias_matches.clone();
+        Callback::from(move |maybe_alias: Option<String>| {
+            if let Some(alias) = maybe_alias {
+                let idx = (*alias_matches).iter().position(|a| a == &alias).unwrap();
+                dropdown_selected_idx.set(Some(idx));
+            } else {
+                dropdown_selected_idx.set(None);
+            }
+        })
+    };
+
     html! {
         <div class="element">
             <input type="text"
@@ -193,6 +206,7 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
                 selected={*dropdown_selected_idx}
                 matched_aliases={(*alias_matches).clone()}
                 on_click={on_match_click}
+                on_hover={on_match_hover}
             />
         </div>
     }

@@ -14,6 +14,7 @@ pub struct AliasInputProps {
 
 #[function_component(AliasInput)]
 pub fn alias_input(props: &AliasInputProps) -> Html {
+    let focused = use_state_eq(|| false);
     let show_dropdown = use_state_eq(|| false);
     let dropdown_closed_on_select = use_state(|| false);
     let dropdown_selected_idx = use_state(|| None::<usize>);
@@ -38,27 +39,28 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
 
     { // Show dropdown if input value changed
         let text = props.text.clone();
+        let focused = focused.clone();
         let show_dropdown = show_dropdown.clone();
         let dropdown_closed_on_select = dropdown_closed_on_select.clone();
         use_effect_with_deps(
             move |_| {
-                if !*dropdown_closed_on_select {
-                    show_dropdown.set(true);
-                } else {
-                    dropdown_closed_on_select.set(false);
+                if *focused {
+                    if !*dropdown_closed_on_select {
+                        show_dropdown.set(true);
+                    } else {
+                        dropdown_closed_on_select.set(false);
+                    }
                 }
             },
             text,
         );
     }
     {
-        let show_dropdown = show_dropdown.clone();
         let input_ref = input_ref.clone();
         use_effect_with_deps(
             move |_| {
                 let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
                 input.focus().unwrap();
-                show_dropdown.set(true);
             },
             (),
         );
@@ -84,18 +86,22 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
     };
 
     let on_focus = {
+        let focused = focused.clone();
         let show_dropdown = show_dropdown.clone();
         let input_ref = input_ref.clone();
         let on_focus = props.on_focus.clone();
         Callback::from(move |_| {
+            focused.set(true);
             show_dropdown.set(true);
             on_focus.emit(input_ref.clone());
         })
     };
 
     let on_blur = {
+        let focused = focused.clone();
         let show_dropdown = show_dropdown.clone();
         Callback::from(move |_| {
+            focused.set(false);
             show_dropdown.set(false);
         })
     };

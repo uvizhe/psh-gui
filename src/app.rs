@@ -319,8 +319,6 @@ impl Component for App {
             }
             Msg::Login => {
                 self.state = AppState::Unlocking;
-                let callback = ctx.link().callback(Msg::Initialize);
-                self.initialize_psh(callback);
             }
             Msg::Initialize(maybe_psh) => {
                 if let Some(psh) = maybe_psh {
@@ -596,6 +594,13 @@ impl Component for App {
             }}
             { maybe_keyboard }
             </main>
+        }
+    }
+
+    fn rendered(&mut self, ctx: &Context<Self>, _first_render: bool) {
+        if self.state == AppState::Unlocking {
+            let callback = ctx.link().callback(Msg::Initialize);
+            self.initialize_psh(callback);
         }
     }
 }

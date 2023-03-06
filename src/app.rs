@@ -53,13 +53,6 @@ fn charset_id(charset: CharSet) -> usize {
     }
 }
 
-fn is_firefox() -> bool {
-    web_sys::window().unwrap()
-        .navigator()
-        .user_agent().unwrap()
-        .contains("Firefox")
-}
-
 pub enum Msg {
     OnFocusOut(FocusEvent),
     OnInputFocus(NodeRef),
@@ -204,14 +197,12 @@ impl Component for App {
                 // Check where the focus goes. If on non-focusable element, then bring it back
                 if e.related_target().is_none() {
                     let el = e.target_dyn_into::<web_sys::HtmlElement>().unwrap();
-                    if is_firefox() {
-                        spawn_local(async move {
-                            sleep(Duration::from_millis(10)).await;
-                            el.focus().unwrap();
-                        });
-                    } else {
+                    // Ensure proper focus handling by delaying focus event. This helps
+                    // dropdown to maintain its visibility state properly.
+                    spawn_local(async move {
+                        sleep(Duration::from_millis(1)).await;
                         el.focus().unwrap();
-                    }
+                    });
                 }
             }
             Msg::OnInputFocus(new_input_ref) => {

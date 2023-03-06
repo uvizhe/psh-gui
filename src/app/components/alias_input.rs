@@ -70,6 +70,7 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
         let known_aliases = props.known_aliases.clone();
         let on_input = props.on_input.clone();
         Callback::from(move |alias: String| {
+            let alias = alias.trim().to_string();
             let known = known_aliases.contains(&alias);
             on_input.emit((alias, known));
         })

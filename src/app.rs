@@ -402,6 +402,7 @@ impl Component for App {
                         "mp-input" => ctx.link().send_message(Msg::OnPasswordInput(new_value)),
                         "mp2-input" => ctx.link().send_message(Msg::OnPassword2Input(new_value)),
                         "alias-input" => {
+                            let new_value = new_value.trim().to_string();
                             let known = self.known_aliases.contains(&new_value);
                             ctx.link().send_message(Msg::OnAliasInput((new_value, known)));
                         }

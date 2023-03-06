@@ -177,10 +177,8 @@ pub fn alias_input(props: &AliasInputProps) -> Html {
 
     let on_match_hover = {
         let dropdown_selected_idx = dropdown_selected_idx.clone();
-        let alias_matches = alias_matches.clone();
-        Callback::from(move |maybe_alias: Option<String>| {
-            if let Some(alias) = maybe_alias {
-                let idx = (*alias_matches).iter().position(|a| a == &alias).unwrap();
+        Callback::from(move |maybe_idx: Option<usize>| {
+            if let Some(idx) = maybe_idx {
                 dropdown_selected_idx.set(Some(idx));
             } else {
                 dropdown_selected_idx.set(None);

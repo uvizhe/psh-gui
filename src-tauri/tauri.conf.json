@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeBuildCommand": "trunk build --release",
-    "beforeDevCommand": "trunk serve",
+    "beforeBuildCommand": "trunk build --release --features=keyboard",
+    "beforeDevCommand": "trunk serve --features=keyboard",
     "devPath": "http://localhost:8080",
     "distDir": "../dist"
   },
@@ -55,7 +55,7 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
+        "height": 640,
         "resizable": false,
         "title": "Psh Password Manager",
         "width": 400

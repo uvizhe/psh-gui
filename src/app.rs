@@ -53,6 +53,13 @@ fn charset_id(charset: CharSet) -> usize {
     }
 }
 
+fn is_android() -> bool {
+    web_sys::window().unwrap()
+        .navigator()
+        .user_agent().unwrap()
+        .contains("Android")
+}
+
 pub enum Msg {
     OnFocusOut(FocusEvent),
     OnInputFocus(NodeRef),
@@ -197,12 +204,17 @@ impl Component for App {
                 // Check where the focus goes. If on non-focusable element, then bring it back
                 if e.related_target().is_none() {
                     let el = e.target_dyn_into::<web_sys::HtmlElement>().unwrap();
-                    // Ensure proper focus handling by delaying focus event. This helps
-                    // dropdown to maintain its visibility state properly.
-                    spawn_local(async move {
-                        sleep(Duration::from_millis(1)).await;
+                    // Ensure proper focus handling if not on Android (where keyboard
+                    // navigation exists) by delaying focus event. This helps dropdown
+                    // to maintain its visibility state properly.
+                    if !is_android() {
+                        spawn_local(async move {
+                            sleep(Duration::from_millis(1)).await;
+                            el.focus().unwrap();
+                        });
+                    } else {
                         el.focus().unwrap();
-                    });
+                    }
                 }
             }
             Msg::OnInputFocus(new_input_ref) => {

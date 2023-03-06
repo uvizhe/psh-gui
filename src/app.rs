@@ -479,7 +479,7 @@ impl Component for App {
                 <>
                     { maybe_warning }
                     <SecretInput
-                        clear={self.mp_wrong}
+                        text={self.master_password.clone()}
                         focus=true
                         id="mp-input"
                         hint="Enter master password..."
@@ -490,6 +490,7 @@ impl Component for App {
                     />
                     if !db_exists {
                         <SecretInput
+                            text={self.master_password2.clone()}
                             id="mp2-input"
                             hint="Repeat master password..."
                             keyboard={keyboard_use}
@@ -522,7 +523,7 @@ impl Component for App {
                         on_enter={ctx.link().callback(|_| Msg::OnEnterPressed)}
                     />
                     <SecretInput
-                        clear={self.secret.is_empty() || !self.use_secret}
+                        text={self.secret.clone()}
                         disabled={!self.use_secret}
                         id="secret-input"
                         hint="Enter secret..."

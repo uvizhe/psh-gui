@@ -2,8 +2,7 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct SecretInputProps {
-    #[prop_or_default]
-    pub clear: bool,
+    pub text: String,
     #[prop_or_default]
     pub disabled: bool,
     #[prop_or_default]
@@ -31,24 +30,6 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
                 }
             },
             (),
-        );
-    }
-    {
-        let clear = props.clear.clone();
-        let clear2 = props.clear.clone();
-        let input_ref = input_ref.clone();
-        let focus = props.focus.clone();
-        use_effect_with_deps(
-            move |_| {
-                if clear {
-                    let input = input_ref.cast::<web_sys::HtmlInputElement>().unwrap();
-                    input.set_value("");
-                    if focus {
-                        input.focus().unwrap();
-                    }
-                }
-            },
-            clear2,
         );
     }
 
@@ -82,6 +63,7 @@ pub fn secret_input(props: &SecretInputProps) -> Html {
     html! {
         <div class="element">
             <input type="password"
+                value={props.text.clone()}
                 id={props.id.clone()}
                 name={props.id.clone()}
                 key={props.id.clone()}

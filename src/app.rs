@@ -515,7 +515,7 @@ impl Component for App {
                     />
                     <SecretInput
                         text={self.secret.clone()}
-                        disabled={!self.use_secret}
+                        disabled={self.alias.trim().is_empty() || !self.use_secret}
                         id="secret-input"
                         hint="Enter secret..."
                         keyboard={keyboard_use}

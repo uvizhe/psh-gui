@@ -21,6 +21,5 @@
     ]
   },
   "dependencies": {
-    "cordova-import-npm": "^1.0.35"
   }
 }

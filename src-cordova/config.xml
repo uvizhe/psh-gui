@@ -11,17 +11,16 @@
   <allow-intent href="http://*/*"/>
   <allow-intent href="https://*/*"/>
   <platform name="android">
-    <resource-file src="icons/colors.xml" target="/app/src/main/res/values/colors.xml" />
+    <resource-file src="../icons/colors.xml" target="/app/src/main/res/values/colors.xml" />
 
-    <icon background="@color/background" density="mdpi" foreground="icons/mdpi.png" />
-    <icon background="@color/background" density="hdpi" foreground="icons/hdpi.png" />
-    <icon background="@color/background" density="xhdpi" foreground="icons/xhdpi.png" />
-    <icon background="@color/background" density="xxhdpi" foreground="icons/xxhdpi.png" />
-    <icon background="@color/background" density="xxxhdpi" foreground="icons/xxxhdpi.png" />
+    <icon background="@color/background" density="mdpi" foreground="../icons/mdpi.png" />
+    <icon background="@color/background" density="hdpi" foreground="../icons/hdpi.png" />
+    <icon background="@color/background" density="xhdpi" foreground="../icons/xhdpi.png" />
+    <icon background="@color/background" density="xxhdpi" foreground="../icons/xxhdpi.png" />
+    <icon background="@color/background" density="xxxhdpi" foreground="../icons/xxxhdpi.png" />
   </platform>
   <edit-config file="AndroidManifest.xml" target="/manifest/application/activity[@android:name='MainActivity']" mode="merge">
     <activity android:windowSoftInputMode="stateAlwaysHidden" />
   </edit-config>
   <hook src="cordovaBeforePrepare.js" type="before_prepare"/>
-  <hook src="node_modules/cordova-import-npm/scripts/importNpmPackages.js" type="before_prepare"/>
 </widget>

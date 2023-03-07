@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="im.uvizhe.psh" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="im.uvizhe.psh" version="1.0.0" xmlns="http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
   <name>Psh Password Manager</name>
   <description>Psh Password Generator and Manager</description>
   <author email="uvizhe@gmail.com">
@@ -17,6 +19,9 @@
     <icon background="@color/background" density="xxhdpi" foreground="icons/xxhdpi.png" />
     <icon background="@color/background" density="xxxhdpi" foreground="icons/xxxhdpi.png" />
   </platform>
+  <edit-config file="AndroidManifest.xml" target="/manifest/application/activity[@android:name='MainActivity']" mode="merge">
+    <activity android:windowSoftInputMode="stateAlwaysHidden" />
+  </edit-config>
   <hook src="cordovaBeforePrepare.js" type="before_prepare"/>
   <hook src="node_modules/cordova-import-npm/scripts/importNpmPackages.js" type="before_prepare"/>
 </widget>

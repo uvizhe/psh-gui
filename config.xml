@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="io.cordova.hellocordova" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-  <name>HelloCordova</name>
-  <description>Sample Apache Cordova App</description>
-  <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
-        Apache Cordova Team
+<widget id="im.uvizhe.psh" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+  <name>Psh Password Manager</name>
+  <description>Psh Password Generator and Manager</description>
+  <author email="uvizhe@gmail.com">
+        Alexander Uvizhev
     </author>
   <content src="index.html"/>
   <allow-intent href="http://*/*"/>
   <allow-intent href="https://*/*"/>
+  <platform name="android">
+    <resource-file src="icons/colors.xml" target="/app/src/main/res/values/colors.xml" />
+
+    <icon background="@color/background" density="mdpi" foreground="icons/mdpi.png" />
+    <icon background="@color/background" density="hdpi" foreground="icons/hdpi.png" />
+    <icon background="@color/background" density="xhdpi" foreground="icons/xhdpi.png" />
+    <icon background="@color/background" density="xxhdpi" foreground="icons/xxhdpi.png" />
+    <icon background="@color/background" density="xxxhdpi" foreground="icons/xxxhdpi.png" />
+  </platform>
   <hook src="cordovaBeforePrepare.js" type="before_prepare"/>
   <hook src="node_modules/cordova-import-npm/scripts/importNpmPackages.js" type="before_prepare"/>
 </widget>

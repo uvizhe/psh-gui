@@ -22,5 +22,8 @@
   <edit-config file="AndroidManifest.xml" target="/manifest/application/activity[@android:name='MainActivity']" mode="merge">
     <activity android:windowSoftInputMode="stateAlwaysHidden" />
   </edit-config>
+  <config-file parent="/manifest" target="AndroidManifest.xml">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  </config-file>
   <hook src="cordovaBeforePrepare.js" type="before_prepare"/>
 </widget>

@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use gloo_events::EventListener;
+use gloo_timers::callback::Timeout;
 use once_cell::sync::OnceCell;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
@@ -17,6 +18,8 @@ use components::triswitch::Triswitch;
 use components::collapsible::Collapsible;
 #[cfg(feature = "keyboard")]
 use components::keyboard::Keyboard;
+
+const LOCK_TIMEOUT_SEC: u32 = 20;
 
 #[wasm_bindgen]
 extern "C" {
@@ -83,6 +86,7 @@ pub enum Msg {
     OnOptionsCollapsibleClick(bool),
     OnAppPause,
     OnAppResume,
+    Lock,
     #[cfg(feature = "keyboard")]
     OnKbInput(String),
     #[cfg(feature = "keyboard")]
@@ -94,6 +98,8 @@ pub struct App {
     state: AppState,
     // Psh instance
     psh: OnceCell<Psh>,
+    // App lock timeout
+    lock_timeout: Option<Timeout>,
     // Master password
     master_password: String,
     // Second master password value (from second input) on db initialization
@@ -214,6 +220,7 @@ impl Component for App {
         Self {
             state: AppState::New,
             psh: OnceCell::new(),
+            lock_timeout: None::<Timeout>,
             master_password: String::new(),
             master_password2: String::new(),
             mp_wrong: false,
@@ -239,10 +246,27 @@ impl Component for App {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::OnAppPause => {
-                log("paused");
+                if self.state != AppState::New {
+                    let scope = ctx.link().clone();
+                    let timeout = Timeout::new(LOCK_TIMEOUT_SEC * 1_000, move || {
+                        scope.send_message(Msg::Lock);
+                    });
+                    self.lock_timeout = Some(timeout);
+                }
             },
             Msg::OnAppResume => {
-                log("resumed");
+                self.lock_timeout = None;
+            }
+            Msg::Lock => {
+                self.state = AppState::New;
+                self.psh = OnceCell::new();
+                self.master_password = String::new();
+                self.master_password2 = String::new();
+                self.known_aliases = Vec::new();
+                self.alias = String::new();
+                self.secret = String::new();
+                self.password_msg = String::new();
+                self.lock_timeout = None;
             }
             Msg::OnFocusOut(e) => {
                 // Check where the focus goes. If on non-focusable element, then bring it back

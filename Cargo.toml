@@ -2,19 +2,23 @@
 name = "psh-gui"
 version = "0.1.0"
 edition = "2021"
-description = "Template for starting a Yew project using Trunk"
+description = "Psh Password Manager GUI based on Yew"
 readme = "README.md"
-repository = "https://github.com/yewstack/yew-trunk-minimal-template"
-license = "MIT OR Apache-2.0"
-keywords = ["yew", "trunk"]
+repository = "https://github.com/uvizhe/psh-gui"
+license = "MIT"
+keywords = ["password", "password-generator", "password-manager", "yew", "trunk"]
 categories = ["gui", "wasm", "web-programming"]
+authors = ["Alexander Uvizhev"]
+
+[workspace]
+members = ["src-tauri"]
 
 [lib]
 crate-type = ["rlib", "cdylib"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 gloo-events = "0.1.2"
+gloo-timers = "0.2.6"
 once_cell = "1.17.0"
 wasm-bindgen = "0.2.83"
 web-sys = { version = "0.3.59", features = ["HtmlDivElement", "Navigator", "ScrollIntoViewOptions",
@@ -23,9 +27,6 @@ yew = { version="0.20", features=["csr"] }
 
 psh = { path = "../psh" }
 psh-webdb = { path = "../psh/webdb" }
-
-[workspace]
-members = ["src-tauri"]
 
 [features]
 keyboard = []

@@ -4,7 +4,7 @@
 node_modules/
 dist/
 target/
-src-cordova/www/js/
+src-cordova/www/js/psh*
 src-cordova/www/css/index.css
 src-cordova/plugins/
 src-cordova/platforms/

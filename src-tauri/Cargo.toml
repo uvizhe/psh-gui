@@ -1,15 +1,12 @@
 [package]
-name = "app"
+name = "psh-gui-tauri"
+description = "Psh Password Manager GUI based on Yew and wrapped in Tauri app"
+default-run = "psh-gui-tauri"
+authors = ["Alexander Uvizhev"]
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
-default-run = "app"
 edition = "2021"
-rust-version = "1.59"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+repository = "https://github.com/uvizhe/psh-gui"
 
 [build-dependencies]
 tauri-build = { version = "1.2.1", features = [] }

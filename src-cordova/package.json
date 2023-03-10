@@ -1,0 +1,15 @@
+{
+  "cordova": {
+    "platforms": [
+      "android"
+    ],
+    "plugins": {
+      "cordova-plugin-background-mode": {}
+    }
+  },
+  "devDependencies": {
+    "cordova-android": "^10.1.2",
+    "cordova-plugin-background-mode": "^0.7.3",
+    "cordova-plugin-device": "^2.1.0"
+  }
+}

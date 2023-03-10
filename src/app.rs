@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use gloo_events::EventListener;
 use once_cell::sync::OnceCell;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
@@ -35,6 +36,12 @@ enum AliasHandle {
     Store,
     Ignore,
     Remove,
+}
+
+// Event listeners that listen for global app events
+struct AppEventListeners {
+    _pause: EventListener,
+    _resume: EventListener,
 }
 
 fn alias_handle_id(handle: AliasHandle) -> usize {
@@ -74,6 +81,8 @@ pub enum Msg {
     SetCharset(String),
     SetAliasHandle(String),
     OnOptionsCollapsibleClick(bool),
+    OnAppPause,
+    OnAppResume,
     #[cfg(feature = "keyboard")]
     OnKbInput(String),
     #[cfg(feature = "keyboard")]
@@ -120,6 +129,8 @@ pub struct App {
     // Visibility of keyboard
     #[cfg(feature = "keyboard")]
     kb_visible: bool,
+    // App global event listeners
+    _app_event_listeners: AppEventListeners,
 }
 
 impl App {
@@ -173,7 +184,33 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
+        let document = web_sys::window().unwrap()
+            .document().unwrap();
+        let on_pause = {
+            let scope = ctx.link().clone();
+            Callback::from(move |_: Event| {
+                scope.send_message(Msg::OnAppPause);
+            })
+        };
+        let pause = EventListener::new(
+            &document,
+            "pause",
+            move |e| on_pause.emit(e.clone())
+        );
+        let on_resume = {
+            let scope = ctx.link().clone();
+            Callback::from(move |_: Event| {
+                scope.send_message(Msg::OnAppResume);
+            })
+        };
+        let resume = EventListener::new(
+            &document,
+            "resume",
+            move |e| on_resume.emit(e.clone())
+        );
+        let listeners = AppEventListeners { _pause: pause, _resume: resume };
+
         Self {
             state: AppState::New,
             psh: OnceCell::new(),
@@ -195,11 +232,18 @@ impl Component for App {
             options_visible: false,
             #[cfg(feature = "keyboard")]
             kb_visible: true,
+            _app_event_listeners: listeners,
         }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
+            Msg::OnAppPause => {
+                log("paused");
+            },
+            Msg::OnAppResume => {
+                log("resumed");
+            }
             Msg::OnFocusOut(e) => {
                 // Check where the focus goes. If on non-focusable element, then bring it back
                 if e.related_target().is_none() {

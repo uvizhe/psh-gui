@@ -1,8 +1,30 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Psh Password Manager</title>
-    <link rel="stylesheet" href="/index.css" />
-  </head>
+    <head>
+        <meta charset="utf-8" />
+        <title>Psh Password Manager</title>
+        <link rel="stylesheet" href="/index.css" />
+        <script>
+            function emit(eventName) {
+                const event = new Event(eventName);
+                document.dispatchEvent(event);
+            }
+
+            if (window.__TAURI__ !== undefined) {
+                const { appWindow } = window.__TAURI__.window;
+                appWindow.onFocusChanged(({ payload: focused }) => {
+                    let eventName = undefined;
+                    if (focused === true) {
+                        eventName = 'resume';
+                    } else {
+                        eventName = 'pause';
+                    }
+                    emit(eventName);
+                });
+            } else {
+                document.addEventListener('focus', () => { emit('resume') });
+                document.addEventListener('blur', () => { emit('pause') });
+            }
+        </script>
+    </head>
 </html>

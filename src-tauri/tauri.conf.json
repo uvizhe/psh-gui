@@ -3,7 +3,8 @@
     "beforeBuildCommand": "trunk build --release --features=keyboard",
     "beforeDevCommand": "trunk serve --features=keyboard",
     "devPath": "http://localhost:8080",
-    "distDir": "../dist"
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "Psh",

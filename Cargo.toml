@@ -25,8 +25,8 @@ web-sys = { version = "0.3.59", features = ["HtmlDivElement", "Navigator", "Scro
     "ScrollLogicalPosition"] }
 yew = { version="0.20", features=["csr"] }
 
-psh = { path = "../psh" }
-psh-webdb = { path = "../psh/webdb" }
+psh = { version = "0.5.0", path = "../psh" }
+psh-webdb = { version = "0.2.0", path = "../psh/webdb" }
 
 [features]
 keyboard = []

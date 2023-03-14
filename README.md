@@ -20,7 +20,7 @@ Assuming all prerequisites for Android development have been installed
 
 ```sh
 $ cd src-cordova
-$ cordova platform add android
+$ cordova platform add android@11
 $ cordova run android  # This will build debug apk version and install on connected Android device or emulator
 ```
 

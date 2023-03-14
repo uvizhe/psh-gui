@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="im.uvizhe.psh" version="1.0.0" xmlns="http://www.w3.org/ns/widgets"
+<widget id="im.uvizhe.psh" version="0.1.0" xmlns="http://www.w3.org/ns/widgets"
     xmlns:cdv="http://cordova.apache.org/ns/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android">
   <name>Psh Password Manager</name>
   <description>Psh Password Generator and Manager</description>
   <author email="uvizhe@gmail.com">
-        Alexander Uvizhev
-    </author>
+    Alexander Uvizhev
+  </author>
   <content src="index.html"/>
   <allow-intent href="http://*/*"/>
   <allow-intent href="https://*/*"/>
   <platform name="android">
+    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="../icons/xxxhdpi.png" />
+    <preference name="AndroidWindowSplashScreenBackground" value="#000000" />
+
     <resource-file src="../icons/colors.xml" target="/app/src/main/res/values/colors.xml" />
 
     <icon background="@color/background" density="mdpi" foreground="../icons/mdpi.png" />

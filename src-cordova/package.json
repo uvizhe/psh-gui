@@ -8,8 +8,8 @@
     }
   },
   "devDependencies": {
-    "cordova-android": "^12.0.1",
+    "cordova-android": "^14.0.1",
     "cordova-plugin-background-mode": "^0.7.3",
-    "cordova-plugin-device": "^2.1.0"
+    "cordova-plugin-device": "^3.0.0"
   }
 }

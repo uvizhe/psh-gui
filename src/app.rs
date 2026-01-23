@@ -1,8 +1,8 @@
+use std::cell::OnceCell;
 use std::time::Duration;
 
 use gloo_events::EventListener;
 use gloo_timers::callback::Timeout;
-use once_cell::sync::OnceCell;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 use yew::platform::{spawn_local, time::sleep};

@@ -1,6 +1,6 @@
 [package]
 name = "psh-gui"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Psh Password Manager GUI based on Yew"
 readme = "README.md"
@@ -17,11 +17,10 @@ members = ["src-tauri"]
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-gloo-events = "0.1.2"
-gloo-timers = "0.2.6"
-once_cell = "1.17.0"
-wasm-bindgen = "0.2.83"
-web-sys = { version = "0.3.59", features = ["HtmlDivElement", "Navigator", "ScrollIntoViewOptions",
+gloo-events = "0.2.0"
+gloo-timers = "0.3.0"
+wasm-bindgen = "0.2.108"
+web-sys = { version = "0.3.85", features = ["HtmlDivElement", "Navigator", "ScrollIntoViewOptions",
     "ScrollLogicalPosition"] }
 yew = { version="0.20", features=["csr"] }
 

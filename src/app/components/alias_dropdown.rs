@@ -20,8 +20,8 @@ pub fn alias_dropdown(props: &AliasDropdownProps) -> Html {
                     let el = web_sys::window().unwrap()
                         .document().unwrap()
                         .get_element_by_id(&format!("alias-{}", idx)).unwrap();
-                    let mut options = web_sys::ScrollIntoViewOptions::new();
-                    options.block(web_sys::ScrollLogicalPosition::Nearest);
+                    let options = web_sys::ScrollIntoViewOptions::new();
+                    options.set_block(web_sys::ScrollLogicalPosition::Nearest);
                     el.scroll_into_view_with_scroll_into_view_options(&options);
                 }
             },

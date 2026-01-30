@@ -4,12 +4,13 @@
       "android"
     ],
     "plugins": {
-      "cordova-plugin-background-mode": {}
+      "cordova-plugin-privacyscreen": {},
+      "cordova-plugin-device": {}
     }
   },
   "devDependencies": {
     "cordova-android": "^14.0.1",
-    "cordova-plugin-background-mode": "^0.7.3",
-    "cordova-plugin-device": "^3.0.0"
+    "cordova-plugin-device": "^3.0.0",
+    "cordova-plugin-privacyscreen": "^0.4.0"
   }
 }
